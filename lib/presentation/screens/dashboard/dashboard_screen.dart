@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:manager_app/data/models/order.dart';
 import 'package:manager_app/presentation/providers/dashboard_provider.dart';
 import 'package:manager_app/presentation/providers/order_provider.dart';
-import 'package:manager_app/core/constants/constants.dart';
+import 'package:manager_app/core/theme/app_colors.dart';
 import 'package:manager_app/presentation/widgets/loading_shimmer.dart';
 import 'package:manager_app/presentation/widgets/order_card.dart';
 import 'package:manager_app/presentation/widgets/stat_card.dart';
@@ -511,8 +511,7 @@ class _OrderDetailSheet extends StatelessWidget {
               ),
             ),
           // Action buttons
-          if (order.status != OrderStatus.completed &&
-              order.status != OrderStatus.cancelled)
+          if (order.status != OrderStatus.collected)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Row(children: _buildActionButtons(context)),
@@ -523,94 +522,49 @@ class _OrderDetailSheet extends StatelessWidget {
   }
 
   List<Widget> _buildActionButtons(BuildContext context) {
-    final List<Widget> buttons = [];
+    final nextStatus = order.status.nextStatus;
+    if (nextStatus == null) return [];
 
-    if (order.status == OrderStatus.pending) {
-      buttons.add(
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () {
-              ref
-                  .read(orderProvider.notifier)
-                  .updateStatus(order.id, OrderStatus.cancelled);
-              Navigator.pop(context);
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.error,
-              side: const BorderSide(color: AppColors.error),
-            ),
-            child: const Text('Reject'),
-          ),
-        ),
-      );
-      buttons.add(const SizedBox(width: 12));
-      buttons.add(
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              ref
-                  .read(orderProvider.notifier)
-                  .updateStatus(order.id, OrderStatus.accepted);
-              Navigator.pop(context);
-            },
-            child: const Text('Accept'),
-          ),
-        ),
-      );
-    } else if (order.status == OrderStatus.accepted) {
-      buttons.add(
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              ref
-                  .read(orderProvider.notifier)
-                  .updateStatus(order.id, OrderStatus.preparing);
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.restaurant, size: 18),
-            label: const Text('Start Preparing'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.preparing,
-            ),
-          ),
-        ),
-      );
-    } else if (order.status == OrderStatus.preparing) {
-      buttons.add(
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              ref
-                  .read(orderProvider.notifier)
-                  .updateStatus(order.id, OrderStatus.ready);
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.check, size: 18),
-            label: const Text('Mark Ready'),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.ready),
-          ),
-        ),
-      );
-    } else if (order.status == OrderStatus.ready) {
-      buttons.add(
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              ref
-                  .read(orderProvider.notifier)
-                  .updateStatus(order.id, OrderStatus.completed);
-              Navigator.pop(context);
-            },
-            icon: const Icon(Icons.done_all, size: 18),
-            label: const Text('Complete'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.completed,
-            ),
-          ),
-        ),
-      );
+    void updateAndClose(OrderStatus newStatus) {
+      ref.read(orderProvider.notifier).updateStatus(order.id, newStatus);
+      Navigator.pop(context);
     }
 
-    return buttons;
+    String label;
+    IconData icon;
+    Color? bgColor;
+
+    switch (nextStatus) {
+      case OrderStatus.preparing:
+        label = 'Start Preparing';
+        icon = Icons.restaurant;
+        bgColor = AppColors.preparing;
+        break;
+      case OrderStatus.ready:
+        label = 'Mark Ready';
+        icon = Icons.check;
+        bgColor = AppColors.ready;
+        break;
+      case OrderStatus.collected:
+        label = 'Mark Collected';
+        icon = Icons.done_all;
+        bgColor = AppColors.success;
+        break;
+      default:
+        return [];
+    }
+
+    return [
+      Expanded(
+        child: ElevatedButton.icon(
+          onPressed: () => updateAndClose(nextStatus),
+          icon: Icon(icon, size: 18),
+          label: Text(label),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: bgColor,
+          ),
+        ),
+      ),
+    ];
   }
 }

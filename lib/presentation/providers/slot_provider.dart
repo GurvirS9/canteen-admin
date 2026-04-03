@@ -40,8 +40,9 @@ class SlotNotifier extends StateNotifier<AsyncValue<List<Slot>>> {
 
   Future<void> toggleOpen(String slotId) async {
     try {
-      final updated = await _service.toggleOpen(slotId);
       final currentSlots = state.valueOrNull ?? [];
+      final slotToUpdate = currentSlots.firstWhere((s) => s.id == slotId);
+      final updated = await _service.toggleOpen(slotId, slotToUpdate);
       state = AsyncData(
         currentSlots.map((s) => s.id == updated.id ? updated : s).toList(),
       );

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:manager_app/presentation/providers/auth_provider.dart';
+import 'package:manager_app/presentation/providers/debug_provider.dart';
 import 'package:manager_app/presentation/providers/theme_provider.dart';
-import 'package:manager_app/data/services/api_config.dart';
-import 'package:manager_app/core/constants/constants.dart';
+import 'package:manager_app/core/theme/app_colors.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -13,14 +13,11 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  bool _isDemoMode = ApiConfig.isDemoMode;
-
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final user = authState.valueOrNull;
     final themeMode = ref.watch(themeModeProvider);
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -115,19 +112,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 8),
 
             _SettingsTile(
-              icon: Icons.science_outlined,
-              title: 'Demo Mode',
-              subtitle: _isDemoMode
-                  ? 'Using mock data'
-                  : 'Connected to live API',
+              icon: Icons.bug_report_outlined,
+              title: 'Debug Mode',
+              subtitle: ref.watch(debugProvider).debugMode
+                  ? 'Showing error overlay'
+                  : 'Error overlay hidden',
               trailing: Switch.adaptive(
-                value: _isDemoMode,
-                activeThumbColor: colorScheme.primary,
+                value: ref.watch(debugProvider).debugMode,
+                activeThumbColor: AppColors.error,
                 onChanged: (v) {
-                  setState(() {
-                    _isDemoMode = v;
-                    ApiConfig.isDemoMode = v;
-                  });
+                  ref.read(debugProvider).setDebugMode(v);
                 },
               ),
             ),

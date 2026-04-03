@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:manager_app/data/models/menu_item.dart';
-import 'package:manager_app/core/constants/constants.dart';
+import 'package:manager_app/core/theme/app_colors.dart';
+import 'package:manager_app/presentation/widgets/menu_item_image.dart';
 
 class MenuItemCard extends StatelessWidget {
   final MenuItem item;
@@ -47,33 +48,14 @@ class MenuItemCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Image placeholder
-              Container(
+              // Image thumbnail
+              MenuItemImage(
+                imageUrl: item.imageUrl,
                 width: 64,
                 height: 64,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withValues(
-                    alpha: isDark ? 0.2 : 0.15,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: item.imageUrl != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          item.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Icon(
-                            Icons.restaurant,
-                            color: AppColors.primary.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      )
-                    : Icon(
-                        Icons.restaurant,
-                        color: AppColors.primary.withValues(alpha: 0.5),
-                        size: 28,
-                      ),
+                fit: BoxFit.cover,
+                borderRadius: BorderRadius.circular(12),
+                itemName: item.name,
               ),
               const SizedBox(width: 12),
               // Info
@@ -161,7 +143,11 @@ class MenuItemCard extends StatelessWidget {
                             child: Switch.adaptive(
                               value: item.isAvailable,
                               onChanged: onAvailabilityChanged,
-                              activeThumbColor: AppColors.success,
+                              thumbColor: WidgetStateProperty.resolveWith(
+                                (states) => states.contains(WidgetState.selected)
+                                    ? AppColors.success
+                                    : null,
+                              ),
                             ),
                           ),
                       ],

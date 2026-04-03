@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import 'package:manager_app/presentation/providers/auth_provider.dart';
-import 'package:manager_app/core/constants/constants.dart';
+import 'package:manager_app/core/theme/app_colors.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends ConsumerStatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen>
+class _SignupScreenState extends ConsumerState<SignupScreen>
     with SingleTickerProviderStateMixin {
-  final _emailController = TextEditingController(text: 'rajesh@canteen.com');
-  final _passwordController = TextEditingController(text: 'password');
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
+
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -28,20 +31,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-          CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
-        );
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _slideAnimation = Tween<Offset>(
+            begin: const Offset(0, 0.3), end: Offset.zero)
+        .animate(
+            CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
     _animController.forward();
   }
 
   @override
   void dispose() {
     _animController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -57,7 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       if (next is AsyncError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Login failed: ${next.error}'),
+            content: Text('Signup failed: ${next.error}'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -85,14 +87,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         ),
         child: Stack(
           children: [
-            // Background Doodles
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _DoodlePainter(
-                  color: Colors.white.withValues(alpha: 0.08),
-                ),
-              ),
-            ),
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
@@ -104,7 +98,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Logo / branding
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -112,31 +105,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: const Icon(
-                              Icons.restaurant_menu,
+                              Icons.person_add,
                               size: 48,
                               color: Colors.white,
                             ),
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            'Canteen Manager',
+                            'Create Account',
                             style: GoogleFonts.inter(
                               fontSize: 28,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Admin Dashboard',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: Colors.white.withValues(alpha: 0.7),
-                              letterSpacing: 1.5,
-                            ),
-                          ),
                           const SizedBox(height: 40),
-                          // Login card
                           Container(
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
@@ -156,27 +139,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Text(
-                                    'Welcome Back',
+                                    'Register',
                                     style: GoogleFonts.inter(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w700,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Sign in to manage your canteen',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.6),
+                                      color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                   const SizedBox(height: 24),
+                                  TextFormField(
+                                    controller: _nameController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Full Name',
+                                      prefixIcon: Icon(Icons.person_outline),
+                                    ),
+                                    validator: (v) {
+                                      if (v == null || v.isEmpty) return 'Name is required';
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 16),
                                   TextFormField(
                                     controller: _emailController,
                                     keyboardType: TextInputType.emailAddress,
@@ -185,12 +167,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                       prefixIcon: Icon(Icons.email_outlined),
                                     ),
                                     validator: (v) {
-                                      if (v == null || v.isEmpty) {
-                                        return 'Email is required';
-                                      }
-                                      if (!v.contains('@')) {
-                                        return 'Enter a valid email';
-                                      }
+                                      if (v == null || v.isEmpty) return 'Email is required';
+                                      if (!v.contains('@')) return 'Enter a valid email';
                                       return null;
                                     },
                                   ),
@@ -200,9 +178,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                     obscureText: _obscurePassword,
                                     decoration: InputDecoration(
                                       labelText: 'Password',
-                                      prefixIcon: const Icon(
-                                        Icons.lock_outline,
-                                      ),
+                                      prefixIcon: const Icon(Icons.lock_outline),
                                       suffixIcon: IconButton(
                                         icon: Icon(
                                           _obscurePassword
@@ -210,23 +186,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                               : Icons.visibility_outlined,
                                         ),
                                         onPressed: () => setState(
-                                          () => _obscurePassword =
-                                              !_obscurePassword,
-                                        ),
+                                            () => _obscurePassword = !_obscurePassword),
                                       ),
                                     ),
                                     validator: (v) {
-                                      if (v == null || v.isEmpty) {
-                                        return 'Password is required';
-                                      }
+                                      if (v == null || v.isEmpty) return 'Password is required';
+                                      if (v.length < 6) return 'Password must be at least 6 characters';
                                       return null;
                                     },
                                   ),
-                                  const SizedBox(height: 24),
+                                  const SizedBox(height: 32),
                                   SizedBox(
                                     height: 50,
                                     child: ElevatedButton(
-                                      onPressed: isLoading ? null : _onLogin,
+                                      onPressed: isLoading ? null : _onSignup,
                                       child: isLoading
                                           ? const SizedBox(
                                               width: 22,
@@ -236,41 +209,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                                 color: Colors.white,
                                               ),
                                             )
-                                          : const Text('Sign In'),
+                                          : const Text('Sign Up'),
                                     ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Already have an account?",
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: isLoading
+                                            ? null
+                                            : () => context.pop(),
+                                        child: Text(
+                                          'Sign In',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          // Demo mode badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.science_outlined,
-                                  size: 16,
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Demo Mode — Any credentials work',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
                         ],
@@ -286,90 +254,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
-  void _onLogin() {
+  void _onSignup() {
     if (!_formKey.currentState!.validate()) return;
-    ref
-        .read(authStateProvider.notifier)
-        .login(_emailController.text, _passwordController.text);
+    ref.read(authStateProvider.notifier).signup(
+          _emailController.text,
+          _passwordController.text,
+          _nameController.text,
+        );
   }
-}
-
-class _DoodlePainter extends CustomPainter {
-  final Color color;
-  _DoodlePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    // Abstract fast-food / doodle waves and circles
-    final path1 = Path();
-    path1.moveTo(0, size.height * 0.2);
-    path1.quadraticBezierTo(
-      size.width * 0.2,
-      size.height * 0.1,
-      size.width * 0.4,
-      size.height * 0.25,
-    );
-    path1.quadraticBezierTo(
-      size.width * 0.8,
-      size.height * 0.4,
-      size.width,
-      size.height * 0.15,
-    );
-
-    final path2 = Path();
-    path2.moveTo(0, size.height * 0.7);
-    path2.quadraticBezierTo(
-      size.width * 0.3,
-      size.height * 0.9,
-      size.width * 0.6,
-      size.height * 0.6,
-    );
-    path2.quadraticBezierTo(
-      size.width * 0.9,
-      size.height * 0.4,
-      size.width,
-      size.height * 0.8,
-    );
-
-    canvas.drawPath(path1, paint);
-    canvas.drawPath(path2, paint);
-
-    canvas.drawCircle(Offset(size.width * 0.15, size.height * 0.5), 30, paint);
-    canvas.drawCircle(Offset(size.width * 0.85, size.height * 0.45), 45, paint);
-    canvas.drawCircle(Offset(size.width * 0.7, size.height * 0.8), 20, paint);
-    canvas.drawCircle(Offset(size.width * 0.3, size.height * 0.1), 15, paint);
-
-    // Add some random dots/stars
-    final fillPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(
-      Offset(size.width * 0.5, size.height * 0.15),
-      4,
-      fillPaint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.1, size.height * 0.85),
-      6,
-      fillPaint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.8, size.height * 0.9),
-      5,
-      fillPaint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.5, size.height * 0.7),
-      3,
-      fillPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

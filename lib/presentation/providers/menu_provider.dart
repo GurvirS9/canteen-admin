@@ -26,9 +26,10 @@ class MenuNotifier extends StateNotifier<AsyncValue<List<MenuItem>>> {
     }
   }
 
-  Future<void> create(MenuItem item) async {
+  /// [localImagePath] — absolute path to a locally picked image file (nullable).
+  Future<void> create(MenuItem item, {String? localImagePath}) async {
     try {
-      final created = await _service.create(item);
+      final created = await _service.create(item, localImagePath: localImagePath);
       final currentItems = state.valueOrNull ?? [];
       state = AsyncData([...currentItems, created]);
     } catch (e, st) {
@@ -36,9 +37,11 @@ class MenuNotifier extends StateNotifier<AsyncValue<List<MenuItem>>> {
     }
   }
 
-  Future<void> update(MenuItem item) async {
+  /// [localImagePath] — absolute path to a locally picked image file (nullable).
+  /// Null means "don't change the image".
+  Future<void> update(MenuItem item, {String? localImagePath}) async {
     try {
-      final updated = await _service.update(item);
+      final updated = await _service.update(item, localImagePath: localImagePath);
       final currentItems = state.valueOrNull ?? [];
       state = AsyncData(
         currentItems.map((i) => i.id == updated.id ? updated : i).toList(),
@@ -58,10 +61,23 @@ class MenuNotifier extends StateNotifier<AsyncValue<List<MenuItem>>> {
     }
   }
 
+  Future<void> deleteImage(String id) async {
+    try {
+      final updated = await _service.deleteImage(id);
+      final currentItems = state.valueOrNull ?? [];
+      state = AsyncData(
+        currentItems.map((i) => i.id == updated.id ? updated : i).toList(),
+      );
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
   Future<void> toggleAvailability(String id) async {
     try {
-      final updated = await _service.toggleAvailability(id);
       final currentItems = state.valueOrNull ?? [];
+      final itemToUpdate = currentItems.firstWhere((i) => i.id == id);
+      final updated = await _service.toggleAvailability(id, itemToUpdate);
       state = AsyncData(
         currentItems.map((i) => i.id == updated.id ? updated : i).toList(),
       );

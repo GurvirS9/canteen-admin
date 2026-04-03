@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:manager_app/data/models/menu_item.dart';
 import 'package:manager_app/presentation/providers/menu_provider.dart';
-import 'package:manager_app/core/constants/constants.dart';
+import 'package:manager_app/core/constants/app_constants.dart';
+import 'package:manager_app/core/theme/app_colors.dart';
 import 'package:manager_app/presentation/widgets/empty_state.dart';
 import 'package:manager_app/presentation/widgets/loading_shimmer.dart';
 import 'package:manager_app/presentation/widgets/menu_item_card.dart';
-import 'package:manager_app/presentation/screens/add_edit_menu_item_screen.dart';
+import 'package:manager_app/presentation/screens/menu/add_edit_menu_item_screen.dart';
 
 class MenuScreen extends ConsumerStatefulWidget {
   const MenuScreen({super.key});

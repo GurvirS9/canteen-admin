@@ -43,6 +43,31 @@ class AuthNotifier extends StateNotifier<AsyncValue<AppUser?>> {
       state = AsyncData(user);
     } catch (e, st) {
       state = AsyncError(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> signup(String email, String password, String name) async {
+    state = const AsyncLoading();
+    try {
+      final user = await _service.signup(email, password, name);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userKey, jsonEncode(user.toJson()));
+      state = AsyncData(user);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    state = const AsyncLoading();
+    try {
+      await _service.sendPasswordResetEmail(email);
+      state = const AsyncData(null); // Keep state null because reset doesn't login
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
     }
   }
 

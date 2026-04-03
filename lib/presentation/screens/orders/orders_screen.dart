@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:manager_app/data/models/order.dart';
 import 'package:manager_app/presentation/providers/order_provider.dart';
-import 'package:manager_app/core/constants/constants.dart';
+import 'package:manager_app/core/theme/app_colors.dart';
 import 'package:manager_app/presentation/widgets/empty_state.dart';
 import 'package:manager_app/presentation/widgets/loading_shimmer.dart';
 import 'package:manager_app/presentation/widgets/order_card.dart';
@@ -243,24 +243,30 @@ class _OrderDetailBottomSheet extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '#${order.id}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Order #${order.id.length > 8 ? order.id.substring(order.id.length - 8) : order.id}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        order.customerName,
-                        style: TextStyle(fontSize: 14, color: subtitleColor),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          order.customerName,
+                          style: TextStyle(fontSize: 14, color: subtitleColor),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 12),
                   StatusBadge(status: order.status),
                 ],
               ),
@@ -382,8 +388,7 @@ class _OrderDetailBottomSheet extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Action buttons
-            if (order.status != OrderStatus.completed &&
-                order.status != OrderStatus.cancelled)
+            if (order.status != OrderStatus.collected)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                 child: Row(children: _buildActions(context)),
@@ -397,92 +402,50 @@ class _OrderDetailBottomSheet extends StatelessWidget {
   }
 
   List<Widget> _buildActions(BuildContext context) {
-    final List<Widget> buttons = [];
+    final nextStatus = order.status.nextStatus;
+    if (nextStatus == null) return [];
 
     void updateAndClose(OrderStatus newStatus) {
       ref.read(orderProvider.notifier).updateStatus(order.id, newStatus);
       Navigator.pop(context);
     }
 
-    switch (order.status) {
-      case OrderStatus.pending:
-        buttons.add(
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => updateAndClose(OrderStatus.cancelled),
-              icon: const Icon(Icons.close, size: 18),
-              label: const Text('Reject'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-        );
-        buttons.add(const SizedBox(width: 12));
-        buttons.add(
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => updateAndClose(OrderStatus.accepted),
-              icon: const Icon(Icons.check, size: 18),
-              label: const Text('Accept'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-        );
-        break;
-      case OrderStatus.accepted:
-        buttons.add(
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => updateAndClose(OrderStatus.preparing),
-              icon: const Icon(Icons.restaurant, size: 18),
-              label: const Text('Start Preparing'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.preparing,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-        );
-        break;
+    String label;
+    IconData icon;
+    Color? bgColor;
+
+    switch (nextStatus) {
       case OrderStatus.preparing:
-        buttons.add(
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => updateAndClose(OrderStatus.ready),
-              icon: const Icon(Icons.check_circle, size: 18),
-              label: const Text('Mark Ready'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.ready,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-        );
+        label = 'Start Preparing';
+        icon = Icons.restaurant;
+        bgColor = AppColors.preparing;
         break;
       case OrderStatus.ready:
-        buttons.add(
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => updateAndClose(OrderStatus.completed),
-              icon: const Icon(Icons.done_all, size: 18),
-              label: const Text('Mark Completed'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.completed,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-        );
+        label = 'Mark Ready';
+        icon = Icons.check_circle;
+        bgColor = AppColors.ready;
+        break;
+      case OrderStatus.collected:
+        label = 'Mark Collected';
+        icon = Icons.done_all;
+        bgColor = AppColors.success;
         break;
       default:
-        break;
+        return [];
     }
 
-    return buttons;
+    return [
+      Expanded(
+        child: ElevatedButton.icon(
+          onPressed: () => updateAndClose(nextStatus),
+          icon: Icon(icon, size: 18),
+          label: Text(label),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: bgColor,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        ),
+      ),
+    ];
   }
 }

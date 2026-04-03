@@ -6,7 +6,9 @@ class MenuItem {
   final String category;
   final String? imageUrl;
   final bool isAvailable;
+  final bool isVeg;
   final DateTime createdAt;
+  final int prepTime;
 
   MenuItem({
     required this.id,
@@ -16,6 +18,8 @@ class MenuItem {
     required this.category,
     this.imageUrl,
     this.isAvailable = true,
+    this.isVeg = true,
+    this.prepTime = 0,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -27,6 +31,8 @@ class MenuItem {
     String? category,
     String? imageUrl,
     bool? isAvailable,
+    bool? isVeg,
+    int? prepTime,
     DateTime? createdAt,
   }) {
     return MenuItem(
@@ -37,29 +43,40 @@ class MenuItem {
       category: category ?? this.category,
       imageUrl: imageUrl ?? this.imageUrl,
       isAvailable: isAvailable ?? this.isAvailable,
+      isVeg: isVeg ?? this.isVeg,
+      prepTime: prepTime ?? this.prepTime,
       createdAt: createdAt ?? this.createdAt,
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
     'name': name,
-    'description': description,
     'price': price,
-    'category': category,
-    'imageUrl': imageUrl,
-    'isAvailable': isAvailable,
-    'createdAt': createdAt.toIso8601String(),
+    'prepTime': prepTime,
+    'isVeg': isVeg,
+    'image': imageUrl ?? '',
   };
 
   factory MenuItem.fromJson(Map<String, dynamic> json) => MenuItem(
-    id: json['id'] as String,
-    name: json['name'] as String,
-    description: json['description'] as String,
-    price: (json['price'] as num).toDouble(),
-    category: json['category'] as String,
-    imageUrl: json['imageUrl'] as String?,
+    id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
+    name: json['name'] as String? ?? '',
+    description: json['description'] as String? ?? 'No description available',
+    price: (json['price'] as num?)?.toDouble() ?? 0.0,
+    category: json['category'] as String? ?? 'Snacks',
+    imageUrl: _resolveImageUrl(json['image'] as String? ?? json['imageUrl'] as String?),
     isAvailable: json['isAvailable'] as bool? ?? true,
-    createdAt: DateTime.parse(json['createdAt'] as String),
+    isVeg: json['isVeg'] as bool? ?? true,
+    prepTime: (json['prepTime'] as num?)?.toInt() ?? 0,
+    createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now() : DateTime.now(),
   );
+
+  /// Resolve relative /uploads/... paths to full https:// URLs.
+  static String? _resolveImageUrl(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    // Relative path from backend: prepend host
+    const host = 'https://kanteen-queue-production.up.railway.app';
+    return '$host$raw';
+  }
 }
+

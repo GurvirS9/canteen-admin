@@ -1,80 +1,65 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:manager_app/data/models/order.dart';
-import 'package:manager_app/core/utils/demo_data.dart';
-import 'package:manager_app/data/services/api_config.dart';
+import 'package:manager_app/core/constants/app_constants.dart';
+import 'package:manager_app/data/services/http_client.dart';
+import 'package:manager_app/core/utils/logger.dart';
 
 class OrderService {
-  List<Order>? _demoOrders;
-
-  List<Order> get _orders {
-    _demoOrders ??= List.from(DemoData.orders);
-    return _demoOrders!;
-  }
+  static const String _tag = 'OrderService';
+  final HttpClient _api = HttpClient();
 
   Future<List<Order>> fetchAll({OrderStatus? statusFilter}) async {
-    if (ApiConfig.isDemoMode) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (statusFilter != null) {
-        return _orders.where((o) => o.status == statusFilter).toList();
+    AppLogger.i(_tag, 'fetchAll() statusFilter=${statusFilter?.name ?? 'none'}');
+
+    String endpoint = AppConstants.ordersEndpoint;
+    if (statusFilter != null) {
+      if (statusFilter == OrderStatus.pending ||
+          statusFilter == OrderStatus.preparing ||
+          statusFilter == OrderStatus.ready) {
+        endpoint = AppConstants.activeOrdersEndpoint;
+      } else {
+        endpoint += '?status=${statusFilter.name}';
       }
-      return List.from(_orders);
     }
 
-    String url = ApiConfig.url('/orders');
-    if (statusFilter != null) {
-      url += '?status=${statusFilter.name}';
-    }
-    final response = await http.get(Uri.parse(url));
+    final response = await _api.get(endpoint);
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
-      return data.map((e) => Order.fromJson(e)).toList();
+      final orders = data.map((e) => Order.fromJson(e)).toList();
+      AppLogger.i(_tag, 'fetchAll() parsed ${orders.length} orders');
+      return orders;
     }
-    throw Exception('Failed to fetch orders');
+    AppLogger.e(_tag, 'fetchAll() failed with status ${response.statusCode}');
+    throw Exception('Failed to fetch orders (${response.statusCode})');
   }
 
   Future<Order> updateStatus(String orderId, OrderStatus newStatus) async {
-    if (ApiConfig.isDemoMode) {
-      await Future.delayed(const Duration(milliseconds: 400));
-      final idx = _orders.indexWhere((o) => o.id == orderId);
-      if (idx != -1) {
-        _orders[idx] = _orders[idx].copyWith(status: newStatus);
-        return _orders[idx];
-      }
-      throw Exception('Order not found');
-    }
-
-    final response = await http.patch(
-      Uri.parse(ApiConfig.url('/orders/$orderId')),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'status': newStatus.name}),
+    AppLogger.i(_tag, 'updateStatus() $orderId → ${newStatus.name}');
+    final response = await _api.patch(
+      AppConstants.orderStatusEndpoint(orderId),
+      body: {'status': newStatus.name},
     );
     if (response.statusCode == 200) {
-      return Order.fromJson(jsonDecode(response.body));
+      final updated = Order.fromJson(jsonDecode(response.body));
+      AppLogger.i(_tag, 'updateStatus() updated: ${updated.id} → ${updated.status.name}');
+      return updated;
     }
-    throw Exception('Failed to update order status');
+    AppLogger.e(_tag, 'updateStatus() failed with status ${response.statusCode}');
+    throw Exception('Failed to update order status (${response.statusCode})');
   }
 
   Future<Order> createOrder(Order order) async {
-    if (ApiConfig.isDemoMode) {
-      await Future.delayed(const Duration(milliseconds: 400));
-      final newOrder = order.copyWith(
-        id: 'ORD-${DateTime.now().millisecondsSinceEpoch}',
-        createdAt: DateTime.now(),
-        status: OrderStatus.pending,
-      );
-      _orders.insert(0, newOrder);
-      return newOrder;
-    }
-
-    final response = await http.post(
-      Uri.parse(ApiConfig.url('/orders')),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(order.toJson()),
+    AppLogger.i(_tag, 'createOrder()');
+    final response = await _api.post(
+      AppConstants.ordersEndpoint,
+      body: order.toJson(),
     );
-    if (response.statusCode == 201) {
-      return Order.fromJson(jsonDecode(response.body));
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final created = Order.fromJson(jsonDecode(response.body));
+      AppLogger.i(_tag, 'createOrder() order created: ${created.id}');
+      return created;
     }
-    throw Exception('Failed to create order');
+    AppLogger.e(_tag, 'createOrder() failed with status ${response.statusCode}');
+    throw Exception('Failed to create order (${response.statusCode})');
   }
 }

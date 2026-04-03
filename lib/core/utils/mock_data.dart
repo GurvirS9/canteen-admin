@@ -3,8 +3,8 @@ import 'package:manager_app/data/models/order.dart';
 import 'package:manager_app/data/models/slot.dart';
 import 'package:manager_app/data/models/user.dart';
 
-class DemoData {
-  DemoData._();
+class MockData {
+  MockData._();
 
   static final AppUser demoManager = AppUser(
     id: 'mgr-001',
@@ -116,40 +116,20 @@ class DemoData {
       createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
       notes: 'Extra spicy please',
       items: [
-        const OrderItem(
-          menuItemId: 'mi-001',
-          name: 'Paneer Butter Masala',
-          quantity: 1,
-          price: 180,
-        ),
-        const OrderItem(
-          menuItemId: 'mi-007',
-          name: 'Masala Chai',
-          quantity: 2,
-          price: 25,
-        ),
+        const OrderItem(menuItemId: 'mi-001', name: 'Paneer Butter Masala', quantity: 1, price: 180),
+        const OrderItem(menuItemId: 'mi-007', name: 'Masala Chai', quantity: 2, price: 25),
       ],
       totalAmount: 230,
     ),
     Order(
       id: 'ORD-1002',
       customerName: 'Priya Patel',
-      status: OrderStatus.accepted,
+      status: OrderStatus.preparing,
       slotId: 'slot-002',
       createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
       items: [
-        const OrderItem(
-          menuItemId: 'mi-002',
-          name: 'Chicken Biryani',
-          quantity: 2,
-          price: 220,
-        ),
-        const OrderItem(
-          menuItemId: 'mi-006',
-          name: 'Cold Coffee',
-          quantity: 2,
-          price: 80,
-        ),
+        const OrderItem(menuItemId: 'mi-002', name: 'Chicken Biryani', quantity: 2, price: 220),
+        const OrderItem(menuItemId: 'mi-006', name: 'Cold Coffee', quantity: 2, price: 80),
       ],
       totalAmount: 600,
     ),
@@ -161,12 +141,7 @@ class DemoData {
       slotId: 'slot-001',
       createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
       items: [
-        const OrderItem(
-          menuItemId: 'mi-009',
-          name: 'Thali Combo',
-          quantity: 3,
-          price: 150,
-        ),
+        const OrderItem(menuItemId: 'mi-009', name: 'Thali Combo', quantity: 3, price: 150),
       ],
       totalAmount: 450,
     ),
@@ -177,57 +152,31 @@ class DemoData {
       slotId: 'slot-001',
       createdAt: DateTime.now().subtract(const Duration(hours: 1)),
       items: [
-        const OrderItem(
-          menuItemId: 'mi-003',
-          name: 'Masala Dosa',
-          quantity: 2,
-          price: 90,
-        ),
-        const OrderItem(
-          menuItemId: 'mi-008',
-          name: 'Gulab Jamun (2 pcs)',
-          quantity: 1,
-          price: 50,
-        ),
+        const OrderItem(menuItemId: 'mi-003', name: 'Masala Dosa', quantity: 2, price: 90),
+        const OrderItem(menuItemId: 'mi-008', name: 'Gulab Jamun (2 pcs)', quantity: 1, price: 50),
       ],
       totalAmount: 230,
     ),
     Order(
       id: 'ORD-1005',
       customerName: 'Vikram Singh',
-      status: OrderStatus.completed,
+      status: OrderStatus.collected,
       slotId: 'slot-001',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
       items: [
-        const OrderItem(
-          menuItemId: 'mi-004',
-          name: 'Veg Sandwich',
-          quantity: 4,
-          price: 70,
-        ),
-        const OrderItem(
-          menuItemId: 'mi-007',
-          name: 'Masala Chai',
-          quantity: 4,
-          price: 25,
-        ),
+        const OrderItem(menuItemId: 'mi-004', name: 'Veg Sandwich', quantity: 4, price: 70),
+        const OrderItem(menuItemId: 'mi-007', name: 'Masala Chai', quantity: 4, price: 25),
       ],
       totalAmount: 380,
     ),
     Order(
       id: 'ORD-1006',
       customerName: 'Anita Desai',
-      status: OrderStatus.cancelled,
+      status: OrderStatus.collected,
       slotId: 'slot-002',
       createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-      notes: 'Customer cancelled — duplicate order',
       items: [
-        const OrderItem(
-          menuItemId: 'mi-002',
-          name: 'Chicken Biryani',
-          quantity: 1,
-          price: 220,
-        ),
+        const OrderItem(menuItemId: 'mi-002', name: 'Chicken Biryani', quantity: 1, price: 220),
       ],
       totalAmount: 220,
     ),
@@ -238,81 +187,29 @@ class DemoData {
       slotId: 'slot-003',
       createdAt: DateTime.now().subtract(const Duration(minutes: 2)),
       items: [
-        const OrderItem(
-          menuItemId: 'mi-010',
-          name: 'Aloo Paratha',
-          quantity: 2,
-          price: 60,
-        ),
-        const OrderItem(
-          menuItemId: 'mi-006',
-          name: 'Cold Coffee',
-          quantity: 1,
-          price: 80,
-        ),
+        const OrderItem(menuItemId: 'mi-010', name: 'Aloo Paratha', quantity: 2, price: 60),
+        const OrderItem(menuItemId: 'mi-006', name: 'Cold Coffee', quantity: 1, price: 80),
       ],
       totalAmount: 200,
     ),
     Order(
       id: 'ORD-1008',
       customerName: 'Kavita Joshi',
-      status: OrderStatus.completed,
+      status: OrderStatus.collected,
       slotId: 'slot-001',
       createdAt: DateTime.now().subtract(const Duration(hours: 4)),
       items: [
-        const OrderItem(
-          menuItemId: 'mi-009',
-          name: 'Thali Combo',
-          quantity: 1,
-          price: 150,
-        ),
-        const OrderItem(
-          menuItemId: 'mi-008',
-          name: 'Gulab Jamun (2 pcs)',
-          quantity: 2,
-          price: 50,
-        ),
+        const OrderItem(menuItemId: 'mi-009', name: 'Thali Combo', quantity: 1, price: 150),
+        const OrderItem(menuItemId: 'mi-008', name: 'Gulab Jamun (2 pcs)', quantity: 2, price: 50),
       ],
       totalAmount: 250,
     ),
   ];
 
   static List<Slot> get slots => [
-    const Slot(
-      id: 'slot-001',
-      label: 'Breakfast',
-      startTime: '08:00 AM',
-      endTime: '10:00 AM',
-      isOpen: false,
-      maxOrders: 40,
-      currentOrders: 38,
-    ),
-    const Slot(
-      id: 'slot-002',
-      label: 'Lunch',
-      startTime: '12:00 PM',
-      endTime: '02:00 PM',
-      isOpen: true,
-      maxOrders: 60,
-      currentOrders: 32,
-    ),
-    const Slot(
-      id: 'slot-003',
-      label: 'Evening Snacks',
-      startTime: '04:00 PM',
-      endTime: '06:00 PM',
-      isOpen: true,
-      maxOrders: 30,
-      currentOrders: 5,
-    ),
-    const Slot(
-      id: 'slot-004',
-      label: 'Dinner',
-      startTime: '07:00 PM',
-      endTime: '09:00 PM',
-      isOpen: true,
-      maxOrders: 50,
-      currentOrders: 0,
-    ),
+    const Slot(id: 'slot-001', label: 'Breakfast', startTime: '08:00 AM', endTime: '10:00 AM', isOpen: false, maxOrders: 40, currentOrders: 38),
+    const Slot(id: 'slot-002', label: 'Lunch', startTime: '12:00 PM', endTime: '02:00 PM', isOpen: true, maxOrders: 60, currentOrders: 32),
+    const Slot(id: 'slot-003', label: 'Evening Snacks', startTime: '04:00 PM', endTime: '06:00 PM', isOpen: true, maxOrders: 30, currentOrders: 5),
+    const Slot(id: 'slot-004', label: 'Dinner', startTime: '07:00 PM', endTime: '09:00 PM', isOpen: true, maxOrders: 50, currentOrders: 0),
   ];
 }

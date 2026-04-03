@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manager_app/presentation/providers/auth_provider.dart';
-import 'package:manager_app/presentation/screens/dashboard_screen.dart';
-import 'package:manager_app/presentation/screens/login_screen.dart';
+import 'package:manager_app/presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:manager_app/presentation/screens/auth/login_screen.dart';
+import 'package:manager_app/presentation/screens/auth/signup_screen.dart';
+import 'package:manager_app/presentation/screens/auth/forgot_password_screen.dart';
 import 'package:manager_app/presentation/screens/main_shell.dart';
-import 'package:manager_app/presentation/screens/menu_screen.dart';
-import 'package:manager_app/presentation/screens/orders_screen.dart';
-import 'package:manager_app/presentation/screens/profile_screen.dart';
-import 'package:manager_app/presentation/screens/slots_screen.dart';
+import 'package:manager_app/presentation/screens/menu/menu_screen.dart';
+import 'package:manager_app/presentation/screens/orders/orders_screen.dart';
+import 'package:manager_app/presentation/screens/profile/profile_screen.dart';
+import 'package:manager_app/presentation/screens/slots/slots_screen.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final Ref ref;
@@ -30,7 +32,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final isLoggedIn = authState.valueOrNull != null;
-      final isLoginRoute = state.matchedLocation == '/login';
+      final isLoginRoute = state.matchedLocation == '/login' || 
+                           state.matchedLocation == '/signup' || 
+                           state.matchedLocation == '/forgot-password';
 
       if (!isLoggedIn && !isLoginRoute) return '/login';
       if (isLoggedIn && isLoginRoute) return '/dashboard';
@@ -38,6 +42,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
+      GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
       ShellRoute(
         builder: (context, state, child) {
           final index = _indexFromLocation(state.matchedLocation);

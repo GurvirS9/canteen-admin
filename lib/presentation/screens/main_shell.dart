@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:manager_app/core/constants/constants.dart';
+import 'package:manager_app/core/theme/app_colors.dart';
 
 class MainShell extends StatefulWidget {
   final int currentIndex;

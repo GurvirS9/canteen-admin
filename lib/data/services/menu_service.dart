@@ -1,106 +1,93 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:manager_app/data/models/menu_item.dart';
-import 'package:manager_app/core/utils/demo_data.dart';
-import 'package:manager_app/data/services/api_config.dart';
+import 'package:manager_app/core/constants/app_constants.dart';
+import 'package:manager_app/data/services/http_client.dart';
+import 'package:manager_app/core/utils/logger.dart';
 
 class MenuService {
-  List<MenuItem>? _demoItems;
-
-  List<MenuItem> get _items {
-    _demoItems ??= List.from(DemoData.menuItems);
-    return _demoItems!;
-  }
+  static const String _tag = 'MenuService';
+  final HttpClient _api = HttpClient();
 
   Future<List<MenuItem>> fetchAll() async {
-    if (ApiConfig.isDemoMode) {
-      await Future.delayed(const Duration(milliseconds: 500));
-      return List.from(_items);
-    }
-
-    final response = await http.get(Uri.parse(ApiConfig.url('/menu')));
+    AppLogger.i(_tag, 'fetchAll()');
+    final response = await _api.get(AppConstants.menuEndpoint);
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
-      return data.map((e) => MenuItem.fromJson(e)).toList();
+      final items = data.map((e) => MenuItem.fromJson(e)).toList();
+      AppLogger.i(_tag, 'fetchAll() parsed ${items.length} items from API');
+      return items;
     }
-    throw Exception('Failed to fetch menu');
+    AppLogger.e(_tag, 'fetchAll() failed with status ${response.statusCode}');
+    throw Exception('Failed to fetch menu (${response.statusCode})');
   }
 
-  Future<MenuItem> create(MenuItem item) async {
-    if (ApiConfig.isDemoMode) {
-      await Future.delayed(const Duration(milliseconds: 400));
-      final newItem = item.copyWith(
-        id: 'mi-${DateTime.now().millisecondsSinceEpoch}',
-        createdAt: DateTime.now(),
-      );
-      _items.add(newItem);
-      return newItem;
-    }
-
-    final response = await http.post(
-      Uri.parse(ApiConfig.url('/menu')),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(item.toJson()),
+  Future<MenuItem> create(MenuItem item, {String? localImagePath}) async {
+    AppLogger.i(_tag, 'create() ${item.name} | hasImage=${localImagePath != null}');
+    final fields = _toFields(item);
+    final response = await _api.postMultipart(
+      AppConstants.menuEndpoint,
+      fields: fields,
+      filePath: localImagePath,
     );
-    if (response.statusCode == 201) {
-      return MenuItem.fromJson(jsonDecode(response.body));
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final created = MenuItem.fromJson(jsonDecode(response.body));
+      AppLogger.i(_tag, 'create() item created: ${created.id}');
+      return created;
     }
-    throw Exception('Failed to create menu item');
+    AppLogger.e(_tag, 'create() failed with status ${response.statusCode}: ${response.body}');
+    throw Exception('Failed to create menu item (${response.statusCode})');
   }
 
-  Future<MenuItem> update(MenuItem item) async {
-    if (ApiConfig.isDemoMode) {
-      await Future.delayed(const Duration(milliseconds: 400));
-      final idx = _items.indexWhere((e) => e.id == item.id);
-      if (idx != -1) {
-        _items[idx] = item;
-      }
-      return item;
-    }
-
-    final response = await http.put(
-      Uri.parse(ApiConfig.url('/menu/${item.id}')),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(item.toJson()),
+  Future<MenuItem> update(MenuItem item, {String? localImagePath}) async {
+    AppLogger.i(_tag, 'update() ${item.id} | hasImage=${localImagePath != null}');
+    final fields = _toFields(item);
+    final response = await _api.putMultipart(
+      AppConstants.menuItemEndpoint(item.id),
+      fields: fields,
+      filePath: localImagePath,
     );
     if (response.statusCode == 200) {
-      return MenuItem.fromJson(jsonDecode(response.body));
+      final updated = MenuItem.fromJson(jsonDecode(response.body));
+      AppLogger.i(_tag, 'update() item updated: ${updated.id}');
+      return updated;
     }
-    throw Exception('Failed to update menu item');
+    AppLogger.e(_tag, 'update() failed with status ${response.statusCode}: ${response.body}');
+    throw Exception('Failed to update menu item (${response.statusCode})');
   }
 
   Future<void> delete(String id) async {
-    if (ApiConfig.isDemoMode) {
-      await Future.delayed(const Duration(milliseconds: 300));
-      _items.removeWhere((e) => e.id == id);
-      return;
-    }
-
-    final response = await http.delete(Uri.parse(ApiConfig.url('/menu/$id')));
+    AppLogger.i(_tag, 'delete() $id');
+    final response = await _api.delete(AppConstants.menuItemEndpoint(id));
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('Failed to delete menu item');
+      AppLogger.e(_tag, 'delete() failed with status ${response.statusCode}');
+      throw Exception('Failed to delete menu item (${response.statusCode})');
     }
+    AppLogger.i(_tag, 'delete() $id deleted');
   }
 
-  Future<MenuItem> toggleAvailability(String id) async {
-    if (ApiConfig.isDemoMode) {
-      await Future.delayed(const Duration(milliseconds: 200));
-      final idx = _items.indexWhere((e) => e.id == id);
-      if (idx != -1) {
-        _items[idx] = _items[idx].copyWith(
-          isAvailable: !_items[idx].isAvailable,
-        );
-        return _items[idx];
-      }
-      throw Exception('Item not found');
-    }
-
-    final response = await http.put(
-      Uri.parse(ApiConfig.url('/menu/$id/toggle')),
-    );
+  Future<MenuItem> deleteImage(String id) async {
+    AppLogger.i(_tag, 'deleteImage() $id');
+    final response = await _api.delete(AppConstants.menuItemImageEndpoint(id));
     if (response.statusCode == 200) {
-      return MenuItem.fromJson(jsonDecode(response.body));
+      final updated = MenuItem.fromJson(jsonDecode(response.body)['item']);
+      AppLogger.i(_tag, 'deleteImage() image removed for ${updated.id}');
+      return updated;
     }
-    throw Exception('Failed to toggle availability');
+    AppLogger.e(_tag, 'deleteImage() failed with status ${response.statusCode}');
+    throw Exception('Failed to delete image (${response.statusCode})');
   }
+
+  Future<MenuItem> toggleAvailability(String id, MenuItem currentItem) async {
+    final updatedItem = currentItem.copyWith(isAvailable: !currentItem.isAvailable);
+    return update(updatedItem);
+  }
+
+  Map<String, String> _toFields(MenuItem item) => {
+        'name': item.name,
+        'description': item.description,
+        'price': item.price.toStringAsFixed(2),
+        'prepTime': item.prepTime.toString(),
+        'isVeg': item.isVeg.toString(),
+        'avgDemand': '0',
+      };
 }

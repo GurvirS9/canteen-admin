@@ -1,24 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:manager_app/data/models/order.dart';
 
-class AppConstants {
-  AppConstants._();
-
-  static const String appName = 'Canteen Manager';
-  static const String apiBaseUrl = 'https://api.example.com';
-  static const bool isDemoMode = true;
-
-  // Categories
-  static const List<String> menuCategories = [
-    'Main Course',
-    'Snacks',
-    'Beverages',
-    'Desserts',
-    'Combos',
-    'Breakfast',
-  ];
-}
-
 class AppColors {
   AppColors._();
 
@@ -63,16 +45,12 @@ class AppColors {
     switch (status) {
       case OrderStatus.pending:
         return pending;
-      case OrderStatus.accepted:
-        return accepted;
       case OrderStatus.preparing:
         return preparing;
       case OrderStatus.ready:
         return ready;
-      case OrderStatus.completed:
-        return completed;
-      case OrderStatus.cancelled:
-        return cancelled;
+      case OrderStatus.collected:
+        return success;
     }
   }
 }

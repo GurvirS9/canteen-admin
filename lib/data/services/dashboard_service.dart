@@ -1,51 +1,22 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:manager_app/data/models/dashboard_summary.dart';
-import 'package:manager_app/data/models/order.dart';
-import 'package:manager_app/core/utils/demo_data.dart';
-import 'package:manager_app/data/services/api_config.dart';
+import 'package:manager_app/core/constants/app_constants.dart';
+import 'package:manager_app/data/services/http_client.dart';
+import 'package:manager_app/core/utils/logger.dart';
 
 class DashboardService {
+  static const String _tag = 'DashboardService';
+  final HttpClient _api = HttpClient();
+
   Future<DashboardSummary> fetchSummary() async {
-    if (ApiConfig.isDemoMode) {
-      await Future.delayed(const Duration(milliseconds: 600));
-      final orders = DemoData.orders;
-      final completed = orders
-          .where((o) => o.status == OrderStatus.completed)
-          .toList();
-      final active = orders
-          .where(
-            (o) =>
-                o.status == OrderStatus.accepted ||
-                o.status == OrderStatus.preparing ||
-                o.status == OrderStatus.ready,
-          )
-          .toList();
-      final pending = orders
-          .where((o) => o.status == OrderStatus.pending)
-          .toList();
-      final cancelled = orders
-          .where((o) => o.status == OrderStatus.cancelled)
-          .toList();
-      final revenue =
-          completed.fold<double>(0, (sum, o) => sum + o.totalAmount) +
-          active.fold<double>(0, (sum, o) => sum + o.totalAmount);
-
-      return DashboardSummary(
-        totalOrders: orders.length,
-        revenue: revenue,
-        activeOrders: active.length,
-        completedOrders: completed.length,
-        cancelledOrders: cancelled.length,
-        pendingOrders: pending.length,
-        popularItems: const [],
-      );
-    }
-
-    final response = await http.get(Uri.parse(ApiConfig.url('/summary')));
+    AppLogger.i(_tag, 'fetchSummary()');
+    final response = await _api.get(AppConstants.summaryEndpoint);
     if (response.statusCode == 200) {
-      return DashboardSummary.fromJson(jsonDecode(response.body));
+      final summary = DashboardSummary.fromJson(jsonDecode(response.body));
+      AppLogger.i(_tag, 'fetchSummary() parsed summary from API');
+      return summary;
     }
-    throw Exception('Failed to fetch dashboard summary');
+    AppLogger.e(_tag, 'fetchSummary() failed with status ${response.statusCode}');
+    throw Exception('Failed to fetch dashboard summary (${response.statusCode})');
   }
 }

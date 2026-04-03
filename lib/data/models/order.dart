@@ -1,25 +1,34 @@
 enum OrderStatus {
   pending,
-  accepted,
   preparing,
   ready,
-  completed,
-  cancelled;
+  collected;
 
   String get label {
     switch (this) {
       case OrderStatus.pending:
         return 'Pending';
-      case OrderStatus.accepted:
-        return 'Accepted';
       case OrderStatus.preparing:
         return 'Preparing';
       case OrderStatus.ready:
         return 'Ready';
-      case OrderStatus.completed:
-        return 'Completed';
-      case OrderStatus.cancelled:
-        return 'Cancelled';
+      case OrderStatus.collected:
+        return 'Collected';
+    }
+  }
+
+  /// The next valid status in the backend's linear flow.
+  /// Returns null if this is the terminal status.
+  OrderStatus? get nextStatus {
+    switch (this) {
+      case OrderStatus.pending:
+        return OrderStatus.preparing;
+      case OrderStatus.preparing:
+        return OrderStatus.ready;
+      case OrderStatus.ready:
+        return OrderStatus.collected;
+      case OrderStatus.collected:
+        return null;
     }
   }
 }
@@ -39,19 +48,41 @@ class OrderItem {
 
   double get total => quantity * price;
 
-  Map<String, dynamic> toJson() => {
-    'menuItemId': menuItemId,
-    'name': name,
-    'quantity': quantity,
-    'price': price,
-  };
+  Map<String, dynamic> toJson() {
+    return {
+      'menuItem': menuItemId,
+      'quantity': quantity,
+      'name': name,
+      'price': price,
+    };
+  }
 
-  factory OrderItem.fromJson(Map<String, dynamic> json) => OrderItem(
-    menuItemId: json['menuItemId'] as String,
-    name: json['name'] as String,
-    quantity: json['quantity'] as int,
-    price: (json['price'] as num).toDouble(),
-  );
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    // Handle populated menuItem (object) or plain string id
+    final menuItemField = json['menuItem'];
+    String menuItemId = '';
+    String name = json['name'] as String? ?? 'Unknown Item';
+
+    if (menuItemField is Map<String, dynamic>) {
+      // Populated: { _id: '...', name: '...' }
+      menuItemId = menuItemField['_id']?.toString() ?? menuItemField['id']?.toString() ?? '';
+      name = menuItemField['name'] as String? ?? name;
+    } else if (menuItemField is String) {
+      menuItemId = menuItemField;
+    }
+
+    // Also check menuItemId field for older formats
+    if (menuItemId.isEmpty) {
+      menuItemId = json['menuItemId'] as String? ?? '';
+    }
+
+    return OrderItem(
+      menuItemId: menuItemId,
+      name: name,
+      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
 }
 
 class Order {
@@ -101,29 +132,95 @@ class Order {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'items': items.map((e) => e.toJson()).toList(),
-    'totalAmount': totalAmount,
-    'status': status.name,
-    'customerName': customerName,
-    'customerPhone': customerPhone,
-    'createdAt': createdAt.toIso8601String(),
-    'slotId': slotId,
-    'notes': notes,
-  };
+  Map<String, dynamic> toJson() {
+    return {
+      'userId': customerName,
+      'items': items.map((e) => e.toJson()).toList(),
+      'slotId': slotId ?? '',
+      'status': status.name,
+      'totalAmount': totalAmount,
+      'notes': notes,
+    };
+  }
 
-  factory Order.fromJson(Map<String, dynamic> json) => Order(
-    id: json['id'] as String,
-    items: (json['items'] as List)
-        .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
-        .toList(),
-    totalAmount: (json['totalAmount'] as num).toDouble(),
-    status: OrderStatus.values.byName(json['status'] as String),
-    customerName: json['customerName'] as String,
-    customerPhone: json['customerPhone'] as String?,
-    createdAt: DateTime.parse(json['createdAt'] as String),
-    slotId: json['slotId'] as String?,
-    notes: json['notes'] as String?,
-  );
+  factory Order.fromJson(Map<String, dynamic> json) {
+    // Parse items — backend may return items as:
+    //  1. A List of objects (raw/populated items)
+    //  2. A String like "2x Biryani, 1x Coffee" (formatted by getOrders)
+    List<OrderItem> parsedItems = [];
+    final itemsField = json['items'];
+    final rawItemsField = json['_rawItems'];
+
+    if (rawItemsField is List && rawItemsField.isNotEmpty) {
+      // Use _rawItems (from backend's getOrders which provides both)
+      parsedItems = rawItemsField
+          .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } else if (itemsField is List) {
+      // Standard list of item objects
+      parsedItems = itemsField
+          .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } else if (itemsField is String && itemsField.isNotEmpty) {
+      // Formatted string like "2x Biryani, 1x Coffee"
+      parsedItems = _parseItemsString(itemsField);
+    }
+
+    // Parse slotId — might be an object or a string
+    String? slotId;
+    final slotField = json['slotId'];
+    if (slotField is Map<String, dynamic>) {
+      slotId = slotField['_id']?.toString() ?? slotField['id']?.toString();
+    } else if (slotField is String) {
+      slotId = slotField;
+    }
+
+    // Parse totalAmount from various possible fields
+    double totalAmount = 0.0;
+    if (json['totalAmount'] != null) {
+      totalAmount = (json['totalAmount'] as num).toDouble();
+    }
+    // Fallback: calculate from items if totalAmount is missing or zero
+    if (totalAmount == 0.0 && parsedItems.isNotEmpty) {
+      totalAmount = parsedItems.fold(0.0, (sum, item) => sum + item.total);
+    }
+
+    return Order(
+      id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
+      items: parsedItems,
+      totalAmount: totalAmount,
+      status: OrderStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => OrderStatus.pending,
+      ),
+      customerName: json['userId']?.toString() ?? json['customerName'] as String? ?? 'Unknown Customer',
+      customerPhone: json['customerPhone'] as String?,
+      createdAt: _parseDateTime(json['createdAt'] ?? json['timestamp']),
+      slotId: slotId,
+      notes: json['notes'] as String?,
+    );
+  }
+
+  /// Parse "2x Biryani, 1x Coffee" into OrderItems
+  static List<OrderItem> _parseItemsString(String itemsStr) {
+    final parts = itemsStr.split(', ');
+    return parts.map((part) {
+      final match = RegExp(r'^(\d+)x\s*(.+)$').firstMatch(part.trim());
+      if (match != null) {
+        return OrderItem(
+          menuItemId: '',
+          name: match.group(2)!.trim(),
+          quantity: int.tryParse(match.group(1)!) ?? 1,
+          price: 0.0,
+        );
+      }
+      return OrderItem(menuItemId: '', name: part.trim(), quantity: 1, price: 0.0);
+    }).toList();
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    return DateTime.now();
+  }
 }

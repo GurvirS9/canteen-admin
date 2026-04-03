@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:manager_app/data/models/slot.dart';
 import 'package:manager_app/presentation/providers/slot_provider.dart';
-import 'package:manager_app/core/constants/constants.dart';
+import 'package:manager_app/core/theme/app_colors.dart';
 import 'package:manager_app/presentation/widgets/empty_state.dart';
 import 'package:manager_app/presentation/widgets/loading_shimmer.dart';
 import 'package:manager_app/presentation/widgets/slot_card.dart';

@@ -1,0 +1,151 @@
+name: Flutter Build & Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # Triggers on version tags like v1.0.0
+
+# Allow the workflow to create releases
+permissions:
+  contents: write
+
+jobs:
+  # ── Android ──────────────────────────────────────────────────────────────────
+  android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.5"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        run: flutter test
+
+      # ── Build ────────────────────────────────────────────────────────────────
+      - name: Build APK
+        run: flutter build apk --release --split-per-abi
+
+      # Android App Bundle (Google Play) – uncomment if needed
+      # - name: Build App Bundle
+      #   run: flutter build appbundle --release
+
+      # ── Collect artifacts ────────────────────────────────────────────────────
+      - name: Rename APKs with version tag
+        run: |
+          VERSION="${{ github.ref_name }}"
+          for f in build/app/outputs/flutter-apk/*-release.apk; do
+            base=$(basename "$f" .apk)
+            cp "$f" "build/app/outputs/flutter-apk/${base}-${VERSION}.apk"
+          done
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apks
+          path: build/app/outputs/flutter-apk/*-release-v*.apk
+
+  # ── iOS ───────────────────────────────────────────────────────────────────────
+  ios:
+    name: Build iOS IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.5"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: Archive & export IPA
+        run: |
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -sdk iphoneos \
+            -configuration Release \
+            archive -archivePath build/Runner.xcarchive \
+            CODE_SIGNING_ALLOWED=NO
+          xcodebuild -exportArchive \
+            -archivePath build/Runner.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/ipa \
+            CODE_SIGNING_ALLOWED=NO
+          cd ..
+
+      - name: Rename IPA with version tag
+        run: |
+          VERSION="${{ github.ref_name }}"
+          find ios/build/ipa -name "*.ipa" -exec cp {} "ios/build/ipa/Runner-${VERSION}.ipa" \;
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: ios/build/ipa/Runner-*.ipa
+
+  # ── Release ───────────────────────────────────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [android, ios] # Waits for both builds to succeed
+
+    steps:
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apks
+          path: artifacts/android
+
+      - name: Download iOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-ipa
+          path: artifacts/ios
+
+      - name: Create Release & upload artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Release ${{ github.ref_name }}"
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }} # e.g. v1.0.0-beta → pre-release
+          generate_release_notes: true
+          files: |
+            artifacts/android/*.apk
+            artifacts/ios/*.ipa

@@ -43,14 +43,18 @@ class OrderCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(
-                  '#${order.id}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Text(
+                    'Order #${order.id.length > 8 ? order.id.substring(order.id.length - 8) : order.id}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 StatusBadge(status: order.status, compact: true),
               ],
             ),

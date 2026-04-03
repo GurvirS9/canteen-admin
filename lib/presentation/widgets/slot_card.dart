@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:manager_app/data/models/slot.dart';
-import 'package:manager_app/core/constants/constants.dart';
+import 'package:manager_app/core/theme/app_colors.dart';
 
 class SlotCard extends StatelessWidget {
   final Slot slot;
