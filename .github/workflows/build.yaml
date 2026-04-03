@@ -1,6 +1,7 @@
 name: Flutter Build & Release
 
 on:
+  workflow_dispatch: # Allows manual triggering
   push:
     tags:
       - "v*.*.*" # Triggers on version tags like v1.0.0
