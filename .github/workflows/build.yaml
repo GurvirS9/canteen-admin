@@ -82,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-apks
-          path: build/app/outputs/flutter-apk/*-release-v*.apk
+          path: build/app/outputs/flutter-apk/*.apk
 
   # ── iOS ───────────────────────────────────────────────────────────────────────
   ios:
@@ -129,6 +129,7 @@ jobs:
             brew install cocoapods
           fi
           cd ios
+          rm -f Podfile Podfile.lock
           pod init
           sed -i '' "1s/.*/platform :ios, '14.0'/" Podfile
           pod install
