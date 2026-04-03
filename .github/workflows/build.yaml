@@ -129,10 +129,8 @@ jobs:
             brew install cocoapods
           fi
           cd ios
-          if [ ! -f Podfile ]; then
-            pod init
-            sed -i '' "s/# platform :ios, '12.0'/platform :ios, '14.0'/" Podfile
-          fi
+          pod init
+          sed -i '' "1s/.*/platform :ios, '14.0'/" Podfile
           pod install
           cd ..
 
