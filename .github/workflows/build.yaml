@@ -125,9 +125,14 @@ jobs:
       # ── iOS build ─────────────────────────────────────────────────────────────
       - name: Install CocoaPods
         run: |
+          if ! command -v pod &> /dev/null; then
+            brew install cocoapods
+          fi
           cd ios
-          pod init
-          sed -i '' "s/# platform :ios, '12.0'/platform :ios, '14.0'/" Podfile
+          if [ ! -f Podfile ]; then
+            pod init
+            sed -i '' "s/# platform :ios, '12.0'/platform :ios, '14.0'/" Podfile
+          fi
           pod install
           cd ..
 
