@@ -123,17 +123,6 @@ jobs:
             --yes
 
       # ── iOS build ─────────────────────────────────────────────────────────────
-      - name: Patch Podfile for iOS 14.0 minimum
-        run: |
-          PODFILE="ios/Podfile"
-          if grep -qE "^platform :ios," "$PODFILE"; then
-            perl -i -pe "s/^platform :ios, '[^']+'/platform :ios, '14.0'/" "$PODFILE"
-          else
-            perl -i -pe 'print "platform :ios, '\''14.0'\''\n" if $. == 1' "$PODFILE"
-          fi
-          echo "=== Podfile first 5 lines ==="
-          head -5 "$PODFILE"
-
       - name: Install CocoaPods
         run: |
           if ! command -v pod &> /dev/null; then
