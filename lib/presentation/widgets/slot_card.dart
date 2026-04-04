@@ -6,8 +6,9 @@ class SlotCard extends StatelessWidget {
   final Slot slot;
   final ValueChanged<bool>? onToggle;
   final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
-  const SlotCard({super.key, required this.slot, this.onToggle, this.onEdit});
+  const SlotCard({super.key, required this.slot, this.onToggle, this.onEdit, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -138,33 +139,34 @@ class SlotCard extends StatelessWidget {
                   ),
               ],
             ),
-          const SizedBox(height: 12),
-          // Capacity bar
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: slot.fillPercentage,
-                    backgroundColor: trackBg,
-                    valueColor: AlwaysStoppedAnimation(fillColor),
-                    minHeight: 6,
+            const SizedBox(height: 12),
+            // Capacity bar
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: slot.fillPercentage,
+                      backgroundColor: trackBg,
+                      valueColor: AlwaysStoppedAnimation(fillColor),
+                      minHeight: 6,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                '${slot.currentOrders}/${slot.maxOrders}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: fillColor,
+                const SizedBox(width: 12),
+                Text(
+                  '${slot.currentOrders}/${slot.maxOrders}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: fillColor,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

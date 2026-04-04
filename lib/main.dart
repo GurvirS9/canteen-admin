@@ -7,6 +7,7 @@ import 'package:manager_app/presentation/widgets/debug_overlay.dart';
 import 'package:manager_app/core/router/router.dart';
 import 'package:manager_app/core/theme/app_theme.dart';
 import 'package:manager_app/core/utils/logger.dart';
+import 'package:manager_app/core/theme/app_colors.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:manager_app/firebase_options.dart';
 

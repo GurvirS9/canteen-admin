@@ -16,21 +16,24 @@ class AuthNotifier extends StateNotifier<AsyncValue<AppUser?>> {
   static const _userKey = 'canteen_user';
 
   AuthNotifier(this._service) : super(const AsyncData(null)) {
-    _loadUser();
+    checkSession();
   }
 
   bool get isLoggedIn => state.valueOrNull != null;
 
-  Future<void> _loadUser() async {
+  Future<void> checkSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userStr = prefs.getString(_userKey);
       if (userStr != null) {
         final userData = jsonDecode(userStr);
         state = AsyncData(AppUser.fromJson(userData));
+      } else {
+        state = const AsyncData(null);
       }
     } catch (_) {
       // Silent fail if no saved session
+      state = const AsyncData(null);
     }
   }
 
