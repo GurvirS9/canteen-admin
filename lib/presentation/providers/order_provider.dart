@@ -58,7 +58,7 @@ class OrderNotifier extends StateNotifier<AsyncValue<List<Order>>> {
         // Don't add duplicates
         if (currentOrders.any((o) => o.id == order.id)) return;
         state = AsyncData([order, ...currentOrders]);
-        AppLogger.i(_tag, 'Added new order from socket: ${order.id}');
+        AppLogger.i(_tag, 'Added new order from socket: ${order.id} (${order.customerName})');
       } catch (e) {
         AppLogger.e(_tag, 'Failed to parse orderCreated event: $e');
       }
@@ -101,15 +101,37 @@ class OrderNotifier extends StateNotifier<AsyncValue<List<Order>>> {
     }
   }
 
+  /// Optimistic update: reflects status change immediately in the UI,
+  /// then confirms with the backend. Reverts if the request fails.
   Future<void> updateStatus(String orderId, OrderStatus newStatus) async {
+    final currentOrders = state.valueOrNull ?? [];
+    final idx = currentOrders.indexWhere((o) => o.id == orderId);
+    if (idx == -1) return;
+
+    // Save previous state for rollback
+    final previousState = state;
+
+    // Optimistic: apply instantly
+    final optimistic = List<Order>.from(currentOrders);
+    optimistic[idx] = optimistic[idx].copyWith(status: newStatus);
+    state = AsyncData(optimistic);
+    AppLogger.d(_tag, 'Optimistic update: $orderId → ${newStatus.name}');
+
     try {
       final updated = await _service.updateStatus(orderId, newStatus);
-      final currentOrders = state.valueOrNull ?? [];
-      state = AsyncData(
-        currentOrders.map((o) => o.id == updated.id ? updated : o).toList(),
-      );
+      // Merge in the server-confirmed version (may have richer data)
+      final confirmed = List<Order>.from(state.valueOrNull ?? optimistic);
+      final confirmedIdx = confirmed.indexWhere((o) => o.id == updated.id);
+      if (confirmedIdx != -1) {
+        confirmed[confirmedIdx] = updated;
+        state = AsyncData(confirmed);
+      }
+      AppLogger.i(_tag, 'Confirmed status update: $orderId → ${newStatus.name}');
     } catch (e, st) {
-      state = AsyncError(e, st);
+      // Rollback to previous state on failure
+      state = previousState;
+      AppLogger.e(_tag, 'Failed to update status, rolling back: $e');
+      rethrow;
     }
   }
 

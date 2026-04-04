@@ -248,7 +248,7 @@ class _OrderDetailBottomSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Order #${order.id.length > 8 ? order.id.substring(order.id.length - 8) : order.id}',
+                          'Order #${order.shortId}',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -406,8 +406,18 @@ class _OrderDetailBottomSheet extends StatelessWidget {
     if (nextStatus == null) return [];
 
     void updateAndClose(OrderStatus newStatus) {
-      ref.read(orderProvider.notifier).updateStatus(order.id, newStatus);
       Navigator.pop(context);
+      ref.read(orderProvider.notifier).updateStatus(order.id, newStatus).catchError((e) {
+        // Show error if optimistic update failed to confirm
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update status: ${e.toString()}'),
+              backgroundColor: Colors.red.shade700,
+            ),
+          );
+        }
+      });
     }
 
     String label;

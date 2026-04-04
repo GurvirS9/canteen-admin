@@ -62,11 +62,13 @@ class OrderItem {
     final menuItemField = json['menuItem'];
     String menuItemId = '';
     String name = json['name'] as String? ?? 'Unknown Item';
+    double price = (json['price'] as num?)?.toDouble() ?? 0.0;
 
     if (menuItemField is Map<String, dynamic>) {
-      // Populated: { _id: '...', name: '...' }
+      // Populated: { _id: '...', name: '...', price: ... }
       menuItemId = menuItemField['_id']?.toString() ?? menuItemField['id']?.toString() ?? '';
       name = menuItemField['name'] as String? ?? name;
+      price = (menuItemField['price'] as num?)?.toDouble() ?? price;
     } else if (menuItemField is String) {
       menuItemId = menuItemField;
     }
@@ -80,7 +82,7 @@ class OrderItem {
       menuItemId: menuItemId,
       name: name,
       quantity: (json['quantity'] as num?)?.toInt() ?? 1,
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      price: price,
     );
   }
 }
@@ -107,6 +109,12 @@ class Order {
     this.slotId,
     this.notes,
   });
+
+  /// Short ID for display (last 6 hex characters of MongoDB ObjectID)
+  String get shortId {
+    final raw = id.replaceAll('-', '');
+    return raw.length > 6 ? raw.substring(raw.length - 6).toUpperCase() : raw.toUpperCase();
+  }
 
   Order copyWith({
     String? id,
@@ -144,26 +152,14 @@ class Order {
   }
 
   factory Order.fromJson(Map<String, dynamic> json) {
-    // Parse items — backend may return items as:
-    //  1. A List of objects (raw/populated items)
-    //  2. A String like "2x Biryani, 1x Coffee" (formatted by getOrders)
+    // Parse items — backend now returns full populated array
     List<OrderItem> parsedItems = [];
     final itemsField = json['items'];
-    final rawItemsField = json['_rawItems'];
 
-    if (rawItemsField is List && rawItemsField.isNotEmpty) {
-      // Use _rawItems (from backend's getOrders which provides both)
-      parsedItems = rawItemsField
-          .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } else if (itemsField is List) {
-      // Standard list of item objects
+    if (itemsField is List) {
       parsedItems = itemsField
           .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
           .toList();
-    } else if (itemsField is String && itemsField.isNotEmpty) {
-      // Formatted string like "2x Biryani, 1x Coffee"
-      parsedItems = _parseItemsString(itemsField);
     }
 
     // Parse slotId — might be an object or a string
@@ -175,12 +171,22 @@ class Order {
       slotId = slotField;
     }
 
-    // Parse totalAmount from various possible fields
-    double totalAmount = 0.0;
-    if (json['totalAmount'] != null) {
-      totalAmount = (json['totalAmount'] as num).toDouble();
+    // Parse customerName — backend now returns customerName directly
+    // but userId might still be an object or string in some endpoints
+    String customerName = 'Unknown Customer';
+    final customerNameField = json['customerName'];
+    if (customerNameField is String && customerNameField.isNotEmpty) {
+      customerName = customerNameField;
+    } else {
+      final userIdField = json['userId'];
+      if (userIdField is Map<String, dynamic>) {
+        customerName = userIdField['name'] as String? ?? 'Unknown Customer';
+      }
+      // If it's just an ID string, keep fallback
     }
-    // Fallback: calculate from items if totalAmount is missing or zero
+
+    // Parse totalAmount — prefer backend-calculated value, fallback to item sum
+    double totalAmount = (json['totalAmount'] as num?)?.toDouble() ?? 0.0;
     if (totalAmount == 0.0 && parsedItems.isNotEmpty) {
       totalAmount = parsedItems.fold(0.0, (sum, item) => sum + item.total);
     }
@@ -193,29 +199,12 @@ class Order {
         (e) => e.name == json['status'],
         orElse: () => OrderStatus.pending,
       ),
-      customerName: json['userId']?.toString() ?? json['customerName'] as String? ?? 'Unknown Customer',
+      customerName: customerName,
       customerPhone: json['customerPhone'] as String?,
       createdAt: _parseDateTime(json['createdAt'] ?? json['timestamp']),
       slotId: slotId,
       notes: json['notes'] as String?,
     );
-  }
-
-  /// Parse "2x Biryani, 1x Coffee" into OrderItems
-  static List<OrderItem> _parseItemsString(String itemsStr) {
-    final parts = itemsStr.split(', ');
-    return parts.map((part) {
-      final match = RegExp(r'^(\d+)x\s*(.+)$').firstMatch(part.trim());
-      if (match != null) {
-        return OrderItem(
-          menuItemId: '',
-          name: match.group(2)!.trim(),
-          quantity: int.tryParse(match.group(1)!) ?? 1,
-          price: 0.0,
-        );
-      }
-      return OrderItem(menuItemId: '', name: part.trim(), quantity: 1, price: 0.0);
-    }).toList();
   }
 
   static DateTime _parseDateTime(dynamic value) {
