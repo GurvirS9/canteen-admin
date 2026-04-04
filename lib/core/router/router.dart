@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manager_app/presentation/providers/auth_provider.dart';
 import 'package:manager_app/presentation/screens/dashboard/dashboard_screen.dart';
+import 'package:manager_app/presentation/screens/splash/splash_screen.dart';
 import 'package:manager_app/presentation/screens/auth/login_screen.dart';
 import 'package:manager_app/presentation/screens/auth/signup_screen.dart';
 import 'package:manager_app/presentation/screens/auth/forgot_password_screen.dart';
@@ -27,20 +28,26 @@ final routerProvider = Provider<GoRouter>((ref) {
   final notifier = RouterNotifier(ref);
 
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/',
     refreshListenable: notifier,
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
+      
+      // While auth is still loading, stay on splash
+      if (authState.isLoading) return null;
+      
       final isLoggedIn = authState.valueOrNull != null;
-      final isLoginRoute = state.matchedLocation == '/login' || 
+      final isAuthRoute = state.matchedLocation == '/login' || 
                            state.matchedLocation == '/signup' || 
                            state.matchedLocation == '/forgot-password';
+      final isSplashRoute = state.matchedLocation == '/';
 
-      if (!isLoggedIn && !isLoginRoute) return '/login';
-      if (isLoggedIn && isLoginRoute) return '/dashboard';
+      if (!isLoggedIn && !isAuthRoute) return '/login';
+      if (isLoggedIn && (isAuthRoute || isSplashRoute)) return '/dashboard';
       return null;
     },
     routes: [
+      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
       GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),

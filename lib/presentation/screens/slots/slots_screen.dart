@@ -60,6 +60,7 @@ class SlotsScreen extends ConsumerWidget {
                     ref.read(slotProvider.notifier).toggleOpen(slot.id);
                   },
                   onEdit: () => _showEditDialog(ctx, slot, ref),
+                  onDelete: () => _showDeleteDialog(ctx, slot, ref),
                 );
               },
             );
@@ -370,6 +371,33 @@ class SlotsScreen extends ConsumerWidget {
               Navigator.pop(ctx);
             },
             child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, Slot slot, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Slot?'),
+        content: Text('Are you sure you want to delete "${slot.label}"?\n\nNote: You cannot delete slots with active orders.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(slotProvider.notifier).delete(slot.id);
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
           ),
         ],
       ),
