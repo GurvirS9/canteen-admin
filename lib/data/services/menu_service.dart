@@ -88,6 +88,7 @@ class MenuService {
         'price': item.price.toStringAsFixed(2),
         'prepTime': item.prepTime.toString(),
         'isVeg': item.isVeg.toString(),
+        'isAvailable': item.isAvailable.toString(),
         'avgDemand': '0',
       };
 }

@@ -129,10 +129,7 @@ jobs:
             brew install cocoapods
           fi
           cd ios
-          rm -f Podfile Podfile.lock
-          pod init
-          sed -i '' "1s/.*/platform :ios, '14.0'/" Podfile
-          pod install
+          pod install --repo-update
           cd ..
 
       - name: Build iOS (no codesign)

@@ -34,6 +34,12 @@ class AppConstants {
   static String slotEndpoint(String id) => '/slots/$id';
 
 
+  // ─── Auth ─────────────────────────────────────────────────────
+  /// Dev bypass key accepted by the backend's auth middleware.
+  /// Used as fallback when Firebase token is unavailable.
+  /// ⚠️ Development/testing only — do NOT ship in production without gating.
+  static const String devAuthKey = 'swagger-local-dev-2024';
+
   // ─── Timing ───────────────────────────────────────────────────
   static const int apiTimeout = 30; // seconds
 

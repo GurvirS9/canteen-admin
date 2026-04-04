@@ -35,17 +35,27 @@ class HttpClient {
       Uri.parse('${AppConstants.baseUrl}$endpoint');
 
   /// Build headers with Content-Type and Firebase Auth token.
+  /// Tries a force-refreshed Firebase ID token first; falls back to the
+  /// backend's dev-bypass key if no user is signed in.
   Future<Map<String, String>> _headers() async {
     final headers = <String, String>{'Content-Type': 'application/json'};
     try {
-      final token =
-          await firebase.FirebaseAuth.instance.currentUser?.getIdToken();
-      if (token != null) {
-        headers['Authorization'] = 'Bearer $token';
+      final user = firebase.FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // forceRefresh: true ensures we never send an expired token
+        final token = await user.getIdToken(true);
+        if (token != null && token.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $token';
+          AppLogger.d(_tag, '_headers() Firebase token attached (force-refreshed)');
+          return headers;
+        }
       }
     } catch (e) {
-      AppLogger.w(_tag, 'Could not get Firebase token: $e');
+      AppLogger.w(_tag, '_headers() Firebase token failed: $e — falling back to dev key');
     }
+    // Fallback: use the backend's Swagger dev-key bypass (dev/test only)
+    headers['Authorization'] = 'Bearer ${AppConstants.devAuthKey}';
+    AppLogger.w(_tag, '_headers() Using dev auth key fallback');
     return headers;
   }
 
@@ -243,11 +253,20 @@ class HttpClient {
     // Build auth headers (without Content-Type — multipart sets its own)
     final authHeaders = <String, String>{};
     try {
-      final token =
-          await firebase.FirebaseAuth.instance.currentUser?.getIdToken();
-      if (token != null) authHeaders['Authorization'] = 'Bearer $token';
+      final user = firebase.FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final token = await user.getIdToken(true);
+        if (token != null && token.isNotEmpty) {
+          authHeaders['Authorization'] = 'Bearer $token';
+          AppLogger.d(_tag, 'postMultipart() Firebase token attached (force-refreshed)');
+        }
+      }
     } catch (e) {
-      AppLogger.w(_tag, 'Could not get Firebase token: $e');
+      AppLogger.w(_tag, 'postMultipart() Firebase token failed: $e — falling back to dev key');
+    }
+    if (!authHeaders.containsKey('Authorization')) {
+      authHeaders['Authorization'] = 'Bearer ${AppConstants.devAuthKey}';
+      AppLogger.w(_tag, 'postMultipart() Using dev auth key fallback');
     }
 
     final request = http.MultipartRequest('POST', _uri(endpoint))
@@ -300,11 +319,20 @@ class HttpClient {
 
     final authHeaders = <String, String>{};
     try {
-      final token =
-          await firebase.FirebaseAuth.instance.currentUser?.getIdToken();
-      if (token != null) authHeaders['Authorization'] = 'Bearer $token';
+      final user = firebase.FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final token = await user.getIdToken(true);
+        if (token != null && token.isNotEmpty) {
+          authHeaders['Authorization'] = 'Bearer $token';
+          AppLogger.d(_tag, 'putMultipart() Firebase token attached (force-refreshed)');
+        }
+      }
     } catch (e) {
-      AppLogger.w(_tag, 'Could not get Firebase token: $e');
+      AppLogger.w(_tag, 'putMultipart() Firebase token failed: $e — falling back to dev key');
+    }
+    if (!authHeaders.containsKey('Authorization')) {
+      authHeaders['Authorization'] = 'Bearer ${AppConstants.devAuthKey}';
+      AppLogger.w(_tag, 'putMultipart() Using dev auth key fallback');
     }
 
     final request = http.MultipartRequest('PUT', _uri(endpoint))

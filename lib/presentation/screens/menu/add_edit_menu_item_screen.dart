@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:manager_app/data/models/menu_item.dart';
 import 'package:manager_app/presentation/providers/menu_provider.dart';
 import 'package:manager_app/core/constants/app_constants.dart';
@@ -85,10 +86,35 @@ class _AddEditMenuItemScreenState extends ConsumerState<AddEditMenuItemScreen> {
       imageQuality: 85,
       maxWidth: 1024,
     );
-    if (file != null) {
+    if (file == null) return;
+
+    // Launch cropper with locked 16:10 aspect ratio → 400×250 thumbnail
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: file.path,
+      maxWidth: 400,
+      maxHeight: 250,
+      aspectRatio: const CropAspectRatio(ratioX: 16, ratioY: 10),
+      compressQuality: 85,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Thumbnail',
+          toolbarColor: AppColors.primary,
+          toolbarWidgetColor: Colors.white,
+          activeControlsWidgetColor: AppColors.primary,
+          lockAspectRatio: true,
+        ),
+        IOSUiSettings(
+          title: 'Crop Thumbnail',
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+        ),
+      ],
+    );
+
+    if (cropped != null) {
       setState(() {
-        _localImagePath = file.path;
-        _removeExistingImage = false; // new pick supersedes removal flag
+        _localImagePath = cropped.path;
+        _removeExistingImage = false;
       });
     }
   }
@@ -196,8 +222,7 @@ class _AddEditMenuItemScreenState extends ConsumerState<AddEditMenuItemScreen> {
                   labelText: 'Description',
                   prefixIcon: Icon(Icons.description_outlined),
                 ),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Description is required' : null,
+                // Description is optional — no validator needed
               ),
               const SizedBox(height: 16),
 
