@@ -29,6 +29,7 @@ class OrderNotifier extends StateNotifier<AsyncValue<List<Order>>> {
   final SocketService _socketService;
   StreamSubscription<Map<String, dynamic>>? _createdSub;
   StreamSubscription<Map<String, dynamic>>? _updatedSub;
+  StreamSubscription<Map<String, dynamic>>? _deletedSub;
 
   OrderNotifier(this._service, this._socketService)
       : super(const AsyncLoading()) {
@@ -49,6 +50,7 @@ class OrderNotifier extends StateNotifier<AsyncValue<List<Order>>> {
   void _listenToSocketEvents() {
     _createdSub?.cancel();
     _updatedSub?.cancel();
+    _deletedSub?.cancel();
 
     _createdSub = _socketService.onOrderCreated.listen((data) {
       AppLogger.d(_tag, 'orderCreated socket event: ${data['id']}');
@@ -86,6 +88,18 @@ class OrderNotifier extends StateNotifier<AsyncValue<List<Order>>> {
       updated[idx] = updated[idx].copyWith(status: parsed);
       state = AsyncData(updated);
       AppLogger.i(_tag, 'Updated order $orderId status to ${parsed.name} via socket');
+    });
+
+    _deletedSub = _socketService.onOrderDeleted.listen((data) {
+      final orderId = (data['id'] ?? data['_id'] ?? '').toString();
+      AppLogger.d(_tag, 'orderDeleted socket event: $orderId');
+      if (orderId.isEmpty) return;
+      final currentOrders = state.valueOrNull ?? [];
+      final newList = currentOrders.where((o) => o.id != orderId).toList();
+      if (newList.length != currentOrders.length) {
+        state = AsyncData(newList);
+        AppLogger.i(_tag, 'Removed order $orderId via socket');
+      }
     });
   }
 
@@ -145,10 +159,27 @@ class OrderNotifier extends StateNotifier<AsyncValue<List<Order>>> {
     }
   }
 
+  Future<void> deleteOrder(String id) async {
+    final currentOrders = state.valueOrNull ?? [];
+    // Optimistic remove
+    final previousState = state;
+    state = AsyncData(currentOrders.where((o) => o.id != id).toList());
+    AppLogger.d(_tag, 'Optimistic delete: $id');
+    try {
+      await _service.deleteOrder(id);
+      AppLogger.i(_tag, 'Confirmed delete: $id');
+    } catch (e) {
+      state = previousState;
+      AppLogger.e(_tag, 'Failed to delete order, rolling back: $e');
+      rethrow;
+    }
+  }
+
   @override
   void dispose() {
     _createdSub?.cancel();
     _updatedSub?.cancel();
+    _deletedSub?.cancel();
     super.dispose();
   }
 }

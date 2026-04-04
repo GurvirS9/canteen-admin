@@ -62,4 +62,14 @@ class OrderService {
     AppLogger.e(_tag, 'createOrder() failed with status ${response.statusCode}');
     throw Exception('Failed to create order (${response.statusCode})');
   }
+
+  Future<void> deleteOrder(String id) async {
+    AppLogger.i(_tag, 'deleteOrder() $id');
+    final response = await _api.delete(AppConstants.orderEndpoint(id));
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      AppLogger.e(_tag, 'deleteOrder() failed with status ${response.statusCode}');
+      throw Exception('Failed to delete order (${response.statusCode})');
+    }
+    AppLogger.i(_tag, 'deleteOrder() $id deleted');
+  }
 }

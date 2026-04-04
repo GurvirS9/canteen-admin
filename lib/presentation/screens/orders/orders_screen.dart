@@ -390,9 +390,27 @@ class _OrderDetailBottomSheet extends StatelessWidget {
             // Action buttons
             if (order.status != OrderStatus.collected)
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                 child: Row(children: _buildActions(context)),
               ),
+
+            // Delete button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _confirmDelete(context),
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Delete Order'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ),
 
             const SizedBox(height: 8),
           ],
@@ -457,5 +475,44 @@ class _OrderDetailBottomSheet extends StatelessWidget {
         ),
       ),
     ];
+  }
+
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Order?'),
+        content: Text(
+          'Delete order #${order.shortId} for ${order.customerName}?\n\nThis will also free up the slot capacity.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx); // close dialog
+              Navigator.pop(context); // close bottom sheet
+              ref.read(orderProvider.notifier).deleteOrder(order.id).catchError((e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete order: ${e.toString()}'),
+                      backgroundColor: Colors.red.shade700,
+                    ),
+                  );
+                }
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 }

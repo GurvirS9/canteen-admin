@@ -22,11 +22,15 @@ class SocketService {
       StreamController<Map<String, dynamic>>.broadcast();
   final _orderUpdatedController =
       StreamController<Map<String, dynamic>>.broadcast();
+  final _orderDeletedController =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get onOrderCreated =>
       _orderCreatedController.stream;
   Stream<Map<String, dynamic>> get onOrderUpdated =>
       _orderUpdatedController.stream;
+  Stream<Map<String, dynamic>> get onOrderDeleted =>
+      _orderDeletedController.stream;
 
   /// Connect to the backend Socket.IO server.
   Future<void> connect() async {
@@ -88,6 +92,15 @@ class SocketService {
       }
     });
 
+    _socket!.on('orderDeleted', (data) {
+      AppLogger.d(_tag, 'orderDeleted event: $data');
+      if (data is Map<String, dynamic>) {
+        _orderDeletedController.add(data);
+      } else if (data is Map) {
+        _orderDeletedController.add(Map<String, dynamic>.from(data));
+      }
+    });
+
     _socket!.connect();
   }
 
@@ -105,5 +118,6 @@ class SocketService {
     disconnect();
     _orderCreatedController.close();
     _orderUpdatedController.close();
+    _orderDeletedController.close();
   }
 }

@@ -378,11 +378,41 @@ class SlotsScreen extends ConsumerWidget {
   }
 
   void _showDeleteDialog(BuildContext context, Slot slot, WidgetRef ref) {
+    final hasOrders = slot.currentOrders > 0;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Slot?'),
-        content: Text('Are you sure you want to delete "${slot.label}"?\n\nNote: You cannot delete slots with active orders.'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Are you sure you want to delete "${slot.label}"?'),
+            if (hasOrders) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'This slot has ${slot.currentOrders} active order(s). They will all be permanently deleted.',
+                        style: const TextStyle(fontSize: 13, color: AppColors.error),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),

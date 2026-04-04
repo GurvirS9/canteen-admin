@@ -29,6 +29,7 @@ class AppConstants {
   static const String authLoginEndpoint = '/auth/login';
   static const String authLogoutEndpoint = '/auth/logout';
   static String orderStatusEndpoint(String id) => '/orders/$id/status';
+  static String orderEndpoint(String id) => '/orders/$id';
   static String menuItemEndpoint(String id) => '/menu/$id';
   static String menuItemImageEndpoint(String id) => '/menu/$id/image';
   static String slotEndpoint(String id) => '/slots/$id';
