@@ -204,9 +204,16 @@ class SlotsScreen extends ConsumerWidget {
                   Expanded(
                     child: TextField(
                       controller: startCtrl,
+                      readOnly: true,
+                      onTap: () async {
+                        final picked = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                        if (picked != null && context.mounted) {
+                          startCtrl.text = picked.format(context);
+                        }
+                      },
                       decoration: const InputDecoration(
                         labelText: 'Start Time',
-                        hintText: '12:00 PM',
+                        hintText: 'Select',
                       ),
                     ),
                   ),
@@ -214,9 +221,16 @@ class SlotsScreen extends ConsumerWidget {
                   Expanded(
                     child: TextField(
                       controller: endCtrl,
+                      readOnly: true,
+                      onTap: () async {
+                        final picked = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                        if (picked != null && context.mounted) {
+                          endCtrl.text = picked.format(context);
+                        }
+                      },
                       decoration: const InputDecoration(
                         labelText: 'End Time',
-                        hintText: '01:00 PM',
+                        hintText: 'Select',
                       ),
                     ),
                   ),
@@ -271,26 +285,68 @@ class SlotsScreen extends ConsumerWidget {
       text: slot.maxOrders.toString(),
     );
     final labelCtrl = TextEditingController(text: slot.label);
+    final startCtrl = TextEditingController(text: slot.startTime);
+    final endCtrl = TextEditingController(text: slot.endTime);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Edit Slot'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: labelCtrl,
-              decoration: const InputDecoration(labelText: 'Slot Name'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: maxOrdersCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Max Orders'),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: labelCtrl,
+                decoration: const InputDecoration(labelText: 'Slot Name'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: startCtrl,
+                      readOnly: true,
+                      onTap: () async {
+                        final picked = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                        if (picked != null && context.mounted) {
+                          startCtrl.text = picked.format(context);
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Start Time',
+                        hintText: 'Select',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: endCtrl,
+                      readOnly: true,
+                      onTap: () async {
+                        final picked = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                        if (picked != null && context.mounted) {
+                          endCtrl.text = picked.format(context);
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'End Time',
+                        hintText: 'Select',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: maxOrdersCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Max Orders'),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -304,7 +360,12 @@ class SlotsScreen extends ConsumerWidget {
               ref
                   .read(slotProvider.notifier)
                   .update(
-                    slot.copyWith(label: labelCtrl.text, maxOrders: maxOrders),
+                    slot.copyWith(
+                      label: labelCtrl.text, 
+                      startTime: startCtrl.text,
+                      endTime: endCtrl.text,
+                      maxOrders: maxOrders,
+                    ),
                   );
               Navigator.pop(ctx);
             },

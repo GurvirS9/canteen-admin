@@ -127,7 +127,7 @@ class OrderNotifier extends StateNotifier<AsyncValue<List<Order>>> {
         state = AsyncData(confirmed);
       }
       AppLogger.i(_tag, 'Confirmed status update: $orderId → ${newStatus.name}');
-    } catch (e, st) {
+    } catch (e) {
       // Rollback to previous state on failure
       state = previousState;
       AppLogger.e(_tag, 'Failed to update status, rolling back: $e');
