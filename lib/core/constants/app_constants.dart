@@ -33,6 +33,8 @@ class AppConstants {
   static String menuItemEndpoint(String id) => '/menu/$id';
   static String menuItemImageEndpoint(String id) => '/menu/$id/image';
   static String slotEndpoint(String id) => '/slots/$id';
+  static String slotStatusEndpoint(String id) => '/slots/$id/status';
+
 
 
   // ─── Auth ─────────────────────────────────────────────────────

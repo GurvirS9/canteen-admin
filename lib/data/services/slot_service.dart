@@ -49,8 +49,19 @@ class SlotService {
   }
 
   Future<Slot> toggleOpen(String slotId, Slot currentSlot) async {
-    final updatedSlot = currentSlot.copyWith(isOpen: !currentSlot.isOpen);
-    return update(updatedSlot);
+    final newStatus = currentSlot.isOpen ? 'closed' : 'open';
+    AppLogger.i(_tag, 'toggleOpen() $slotId → $newStatus');
+    final response = await _api.patch(
+      AppConstants.slotStatusEndpoint(slotId),
+      body: {'status': newStatus},
+    );
+    if (response.statusCode == 200) {
+      final updated = Slot.fromJson(jsonDecode(response.body));
+      AppLogger.i(_tag, 'toggleOpen() done: ${updated.id} is now ${newStatus}');
+      return updated;
+    }
+    AppLogger.e(_tag, 'toggleOpen() failed with status ${response.statusCode}: ${response.body}');
+    throw Exception('Failed to toggle slot status (${response.statusCode})');
   }
 
   Future<void> delete(String id) async {

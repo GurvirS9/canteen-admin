@@ -59,14 +59,25 @@ class SlotNotifier extends StateNotifier<AsyncValue<List<Slot>>> {
   }
 
   Future<void> toggleOpen(String slotId) async {
+    final currentSlots = state.valueOrNull ?? [];
+    final slotToUpdate = currentSlots.where((s) => s.id == slotId).firstOrNull;
+    if (slotToUpdate == null) return;
+
+    // Optimistic update — flip immediately so the switch feels instant
+    final optimistic = slotToUpdate.copyWith(isOpen: !slotToUpdate.isOpen);
+    state = AsyncData(_sortSlots(
+      currentSlots.map((s) => s.id == slotId ? optimistic : s).toList(),
+    ));
+
     try {
-      final currentSlots = state.valueOrNull ?? [];
-      final slotToUpdate = currentSlots.firstWhere((s) => s.id == slotId);
-      final updated = await _service.toggleOpen(slotId, slotToUpdate);
-      final newList = currentSlots.map((s) => s.id == updated.id ? updated : s).toList();
-      state = AsyncData(_sortSlots(newList));
+      final confirmed = await _service.toggleOpen(slotId, slotToUpdate);
+      final latest = state.valueOrNull ?? [];
+      state = AsyncData(_sortSlots(
+        latest.map((s) => s.id == confirmed.id ? confirmed : s).toList(),
+      ));
     } catch (e, st) {
-      state = AsyncError(e, st);
+      // Revert optimistic change on failure
+      state = AsyncData(_sortSlots(currentSlots));
     }
   }
 

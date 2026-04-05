@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:manager_app/data/models/menu_item.dart';
 import 'package:manager_app/data/services/menu_service.dart';
 
+
 final menuServiceProvider = Provider<MenuService>((ref) => MenuService());
 
 final menuProvider =
@@ -74,15 +75,25 @@ class MenuNotifier extends StateNotifier<AsyncValue<List<MenuItem>>> {
   }
 
   Future<void> toggleAvailability(String id) async {
+    final currentItems = state.valueOrNull ?? [];
+    final itemToUpdate = currentItems.where((i) => i.id == id).firstOrNull;
+    if (itemToUpdate == null) return;
+
+    // Optimistic update — flip immediately so the switch feels instant
+    final optimistic = itemToUpdate.copyWith(isAvailable: !itemToUpdate.isAvailable);
+    state = AsyncData(
+      currentItems.map((i) => i.id == id ? optimistic : i).toList(),
+    );
+
     try {
-      final currentItems = state.valueOrNull ?? [];
-      final itemToUpdate = currentItems.firstWhere((i) => i.id == id);
-      final updated = await _service.toggleAvailability(id, itemToUpdate);
+      final confirmed = await _service.toggleAvailability(id, itemToUpdate);
+      final latest = state.valueOrNull ?? [];
       state = AsyncData(
-        currentItems.map((i) => i.id == updated.id ? updated : i).toList(),
+        latest.map((i) => i.id == confirmed.id ? confirmed : i).toList(),
       );
     } catch (e, st) {
-      state = AsyncError(e, st);
+      // Revert optimistic change on failure
+      state = AsyncData(currentItems);
     }
   }
 }
