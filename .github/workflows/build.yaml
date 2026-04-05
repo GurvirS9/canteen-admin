@@ -118,6 +118,11 @@ jobs:
       - name: Reinstall dependencies
         run: flutter pub get
 
+      - name: Force iOS deployment target
+        run: |
+          sed -i '' 's/platform :ios, .*/platform :ios, '\''13.0'\''/' ios/Podfile || true
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 13.0/g' ios/Runner.xcodeproj/project.pbxproj || true
+
       - name: Install CocoaPods
         run: |
           if ! command -v pod &> /dev/null; then
