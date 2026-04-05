@@ -115,6 +115,9 @@ jobs:
       - name: Clean Flutter
         run: flutter clean
 
+      - name: Reinstall dependencies
+        run: flutter pub get
+
       - name: Install CocoaPods
         run: |
           if ! command -v pod &> /dev/null; then
