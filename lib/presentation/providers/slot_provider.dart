@@ -75,7 +75,7 @@ class SlotNotifier extends StateNotifier<AsyncValue<List<Slot>>> {
       state = AsyncData(_sortSlots(
         latest.map((s) => s.id == confirmed.id ? confirmed : s).toList(),
       ));
-    } catch (e, st) {
+    } catch (e, _) {
       // Revert optimistic change on failure
       state = AsyncData(_sortSlots(currentSlots));
     }

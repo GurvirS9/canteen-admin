@@ -57,7 +57,7 @@ class SlotService {
     );
     if (response.statusCode == 200) {
       final updated = Slot.fromJson(jsonDecode(response.body));
-      AppLogger.i(_tag, 'toggleOpen() done: ${updated.id} is now ${newStatus}');
+      AppLogger.i(_tag, 'toggleOpen() done: ${updated.id} is now $newStatus');
       return updated;
     }
     AppLogger.e(_tag, 'toggleOpen() failed with status ${response.statusCode}: ${response.body}');

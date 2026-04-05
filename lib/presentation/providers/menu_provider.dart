@@ -91,7 +91,7 @@ class MenuNotifier extends StateNotifier<AsyncValue<List<MenuItem>>> {
       state = AsyncData(
         latest.map((i) => i.id == confirmed.id ? confirmed : i).toList(),
       );
-    } catch (e, st) {
+    } catch (e, _) {
       // Revert optimistic change on failure
       state = AsyncData(currentItems);
     }
