@@ -117,7 +117,7 @@ class Slot {
     label: json['label'] as String? ?? '${json['startTime']} - ${json['endTime']}',
     startTime: json['startTime'] as String? ?? '',
     endTime: json['endTime'] as String? ?? '',
-    isOpen: (json['status'] as String?) == 'open' || (json['isOpen'] as bool? ?? true),
+    isOpen: json['status'] != null ? json['status'] != 'closed' : (json['isOpen'] as bool? ?? true),
     maxOrders: (json['maxCapacity'] as num?)?.toInt() ?? json['maxOrders'] as int? ?? 50,
     currentOrders: (json['currentOrders'] as num?)?.toInt() ?? 0,
     date: json['date'] as String?,
