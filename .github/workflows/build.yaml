@@ -145,12 +145,13 @@ jobs:
             -configuration Release \
             archive -archivePath build/Runner.xcarchive \
             CODE_SIGNING_ALLOWED=NO
-          xcodebuild -exportArchive \
-            -archivePath build/Runner.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/ipa \
-            CODE_SIGNING_ALLOWED=NO
-          cd ..
+          
+          mkdir -p build/ipa/Payload
+          cp -R build/Runner.xcarchive/Products/Applications/Runner.app build/ipa/Payload/
+          cd build/ipa
+          zip -qq -r Runner.ipa Payload
+          rm -rf Payload
+          cd ../..
 
       - name: Rename IPA with version tag
         run: |
