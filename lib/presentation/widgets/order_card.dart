@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:manager_app/data/models/order.dart';
 import 'package:manager_app/presentation/widgets/status_badge.dart';
+import 'package:manager_app/core/utils/time_utils.dart';
 
 class OrderCard extends StatelessWidget {
   final Order order;
@@ -78,7 +79,7 @@ class OrderCard extends StatelessWidget {
                 Icon(Icons.access_time, size: 13, color: iconColor),
                 const SizedBox(width: 4),
                 Text(
-                  timeFormat.format(order.createdAt),
+                  timeFormat.format(TimeUtils.toIST(order.createdAt)),
                   style: TextStyle(fontSize: 12, color: subtitleColor),
                 ),
               ],
