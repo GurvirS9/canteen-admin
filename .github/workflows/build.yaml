@@ -120,8 +120,8 @@ jobs:
 
       - name: Force iOS deployment target
         run: |
-          sed -i '' 's/platform :ios, .*/platform :ios, '\''14.0'\''/' ios/Podfile || true
-          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 14.0/g' ios/Runner.xcodeproj/project.pbxproj || true
+          sed -i '' 's/platform :ios, .*/platform :ios, '\''15.0'\''/' ios/Podfile || true
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 15.0/g' ios/Runner.xcodeproj/project.pbxproj || true
 
       - name: Install CocoaPods
         run: |
