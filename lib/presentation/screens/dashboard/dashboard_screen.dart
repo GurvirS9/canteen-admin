@@ -544,7 +544,7 @@ class _OrderDetailSheet extends StatelessWidget {
               ),
             ),
           // Action buttons
-          if (order.status != OrderStatus.collected)
+          if (order.status != OrderStatus.completed)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Row(children: _buildActionButtons(context)),
@@ -578,8 +578,8 @@ class _OrderDetailSheet extends StatelessWidget {
         icon = Icons.check;
         bgColor = AppColors.ready;
         break;
-      case OrderStatus.collected:
-        label = 'Mark Collected';
+      case OrderStatus.completed:
+        label = 'Mark Completed';
         icon = Icons.done_all;
         bgColor = AppColors.success;
         break;

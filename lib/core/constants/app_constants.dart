@@ -24,6 +24,7 @@ class AppConstants {
   static const String slotsEndpoint = '/slots';
   static const String slotsCheckEndpoint = '/slots/check';
   static const String ordersEndpoint = '/orders';
+  static const String queueEndpoint = '/orders/queue';
   static const String activeOrdersEndpoint = '/orders/active';
   static const String summaryEndpoint = '/summary';
   static const String authLoginEndpoint = '/auth/login';

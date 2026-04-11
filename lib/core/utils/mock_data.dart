@@ -160,7 +160,7 @@ class MockData {
     Order(
       id: 'ORD-1005',
       customerName: 'Vikram Singh',
-      status: OrderStatus.collected,
+      status: OrderStatus.completed,
       slotId: 'slot-001',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
       items: [
@@ -172,7 +172,7 @@ class MockData {
     Order(
       id: 'ORD-1006',
       customerName: 'Anita Desai',
-      status: OrderStatus.collected,
+      status: OrderStatus.completed,
       slotId: 'slot-002',
       createdAt: DateTime.now().subtract(const Duration(hours: 3)),
       items: [
@@ -195,7 +195,7 @@ class MockData {
     Order(
       id: 'ORD-1008',
       customerName: 'Kavita Joshi',
-      status: OrderStatus.collected,
+      status: OrderStatus.completed,
       slotId: 'slot-001',
       createdAt: DateTime.now().subtract(const Duration(hours: 4)),
       items: [

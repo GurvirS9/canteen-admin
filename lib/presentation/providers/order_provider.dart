@@ -73,7 +73,9 @@ class OrderNotifier extends StateNotifier<AsyncValue<List<Order>>> {
 
     _updatedSub = _socketService.onOrderUpdated.listen((data) {
       final orderId = (data['id'] ?? data['_id'] ?? '').toString();
-      final newStatus = data['status'] as String?;
+      final rawStatus = data['status'] as String?;
+      // Map legacy 'collected' to 'completed' for backward compat
+      final newStatus = rawStatus == 'collected' ? 'completed' : rawStatus;
       AppLogger.d(_tag, 'orderUpdated socket event: $orderId → $newStatus');
 
       if (orderId.isEmpty || newStatus == null) return;

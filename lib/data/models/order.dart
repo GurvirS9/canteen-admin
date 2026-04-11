@@ -2,7 +2,8 @@ enum OrderStatus {
   pending,
   preparing,
   ready,
-  collected;
+  completed,
+  cancelled;
 
   String get label {
     switch (this) {
@@ -12,13 +13,15 @@ enum OrderStatus {
         return 'Preparing';
       case OrderStatus.ready:
         return 'Ready';
-      case OrderStatus.collected:
-        return 'Collected';
+      case OrderStatus.completed:
+        return 'Completed';
+      case OrderStatus.cancelled:
+        return 'Cancelled';
     }
   }
 
   /// The next valid status in the backend's linear flow.
-  /// Returns null if this is the terminal status.
+  /// Returns null if this is a terminal status.
   OrderStatus? get nextStatus {
     switch (this) {
       case OrderStatus.pending:
@@ -26,8 +29,9 @@ enum OrderStatus {
       case OrderStatus.preparing:
         return OrderStatus.ready;
       case OrderStatus.ready:
-        return OrderStatus.collected;
-      case OrderStatus.collected:
+        return OrderStatus.completed;
+      case OrderStatus.completed:
+      case OrderStatus.cancelled:
         return null;
     }
   }
@@ -89,6 +93,7 @@ class OrderItem {
 
 class Order {
   final String id;
+  final String? shopId;
   final List<OrderItem> items;
   final double totalAmount;
   final OrderStatus status;
@@ -100,6 +105,7 @@ class Order {
 
   const Order({
     required this.id,
+    this.shopId,
     required this.items,
     required this.totalAmount,
     required this.status,
@@ -118,6 +124,7 @@ class Order {
 
   Order copyWith({
     String? id,
+    String? shopId,
     List<OrderItem>? items,
     double? totalAmount,
     OrderStatus? status,
@@ -129,6 +136,7 @@ class Order {
   }) {
     return Order(
       id: id ?? this.id,
+      shopId: shopId ?? this.shopId,
       items: items ?? this.items,
       totalAmount: totalAmount ?? this.totalAmount,
       status: status ?? this.status,
@@ -143,6 +151,7 @@ class Order {
   Map<String, dynamic> toJson() {
     return {
       'userId': customerName,
+      if (shopId != null) 'shopId': shopId,
       'items': items.map((e) => e.toJson()).toList(),
       'slotId': slotId ?? '',
       'status': status.name,
@@ -171,7 +180,16 @@ class Order {
       slotId = slotField;
     }
 
-    // Parse customerName — backend now returns customerName directly
+    // Parse shopId — might be an object or a string
+    String? shopId;
+    final shopField = json['shopId'];
+    if (shopField is Map<String, dynamic>) {
+      shopId = shopField['_id']?.toString() ?? shopField['id']?.toString();
+    } else if (shopField is String) {
+      shopId = shopField;
+    }
+
+    // Parse customerName — backend returns customerName directly
     // but userId might still be an object or string in some endpoints
     String customerName = 'Unknown Customer';
     final customerNameField = json['customerName'];
@@ -191,12 +209,17 @@ class Order {
       totalAmount = parsedItems.fold(0.0, (sum, item) => sum + item.total);
     }
 
+    // Parse status — map legacy 'collected' to 'completed' for backward compat
+    final rawStatus = json['status'] as String? ?? 'pending';
+    final mappedStatus = rawStatus == 'collected' ? 'completed' : rawStatus;
+
     return Order(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
+      shopId: shopId,
       items: parsedItems,
       totalAmount: totalAmount,
       status: OrderStatus.values.firstWhere(
-        (e) => e.name == json['status'],
+        (e) => e.name == mappedStatus,
         orElse: () => OrderStatus.pending,
       ),
       customerName: customerName,
