@@ -35,6 +35,18 @@ class AppConstants {
   static String slotEndpoint(String id) => '/slots/$id';
   static String slotStatusEndpoint(String id) => '/slots/$id/status';
 
+  // Shops
+  static const String shopsEndpoint = '/shops';
+  static String shopEndpoint(String id) => '/shops/$id';
+  static String shopStatusEndpoint(String id) => '/shops/$id/status';
+
+  // Users
+  static String userFcmEndpoint(String id) => '/users/$id/fcm-token';
+
+  // Analytics / Prediction
+  static const String analyticsEndpoint = '/analytics';
+  static const String predictionEndpoint = '/prediction';
+
 
 
   // ─── Auth ─────────────────────────────────────────────────────

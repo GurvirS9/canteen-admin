@@ -8,18 +8,26 @@ class OrderService {
   static const String _tag = 'OrderService';
   final HttpClient _api = HttpClient();
 
-  Future<List<Order>> fetchAll({OrderStatus? statusFilter}) async {
-    AppLogger.i(_tag, 'fetchAll() statusFilter=${statusFilter?.name ?? 'none'}');
+  Future<List<Order>> fetchAll({OrderStatus? statusFilter, String? shopId}) async {
+    AppLogger.i(_tag, 'fetchAll() statusFilter=${statusFilter?.name ?? 'none'} shopId=${shopId ?? 'all'}');
 
     String endpoint = AppConstants.ordersEndpoint;
+    final queryParams = <String, String>{};
+    if (shopId != null) queryParams['shopId'] = shopId;
+
     if (statusFilter != null) {
       if (statusFilter == OrderStatus.pending ||
           statusFilter == OrderStatus.preparing ||
           statusFilter == OrderStatus.ready) {
         endpoint = AppConstants.activeOrdersEndpoint;
       } else {
-        endpoint += '?status=${statusFilter.name}';
+        queryParams['status'] = statusFilter.name;
       }
+    }
+
+    if (queryParams.isNotEmpty) {
+      final query = queryParams.entries.map((e) => '${e.key}=${e.value}').join('&');
+      endpoint += '?$query';
     }
 
     final response = await _api.get(endpoint);

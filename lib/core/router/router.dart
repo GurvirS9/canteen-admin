@@ -10,7 +10,7 @@ import 'package:manager_app/presentation/screens/auth/forgot_password_screen.dar
 import 'package:manager_app/presentation/screens/main_shell.dart';
 import 'package:manager_app/presentation/screens/menu/menu_screen.dart';
 import 'package:manager_app/presentation/screens/orders/orders_screen.dart';
-import 'package:manager_app/presentation/screens/profile/profile_screen.dart';
+import 'package:manager_app/presentation/screens/shop/shop_settings_screen.dart';
 import 'package:manager_app/presentation/screens/slots/slots_screen.dart';
 
 class RouterNotifier extends ChangeNotifier {
@@ -84,9 +84,9 @@ final routerProvider = Provider<GoRouter>((ref) {
                 const NoTransitionPage(child: OrdersScreen()),
           ),
           GoRoute(
-            path: '/profile',
+            path: '/shop',
             pageBuilder: (context, state) =>
-                const NoTransitionPage(child: ProfileScreen()),
+                const NoTransitionPage(child: ShopSettingsScreen()),
           ),
         ],
       ),
@@ -104,7 +104,7 @@ int _indexFromLocation(String location) {
       return 2;
     case '/orders':
       return 3;
-    case '/profile':
+    case '/shop':
       return 4;
     default:
       return 0;
@@ -122,7 +122,7 @@ String _locationFromIndex(int index) {
     case 3:
       return '/orders';
     case 4:
-      return '/profile';
+      return '/shop';
     default:
       return '/dashboard';
   }

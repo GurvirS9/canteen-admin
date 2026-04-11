@@ -76,9 +76,9 @@ class _MainShellState extends State<MainShell> {
                   onTap: () => widget.onTabChanged(3),
                 ),
                 _NavItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person,
-                  label: 'Profile',
+                  icon: Icons.store_outlined,
+                  activeIcon: Icons.store_rounded,
+                  label: 'My Shop',
                   isSelected: widget.currentIndex == 4,
                   unselectedColor: unselectedColor,
                   onTap: () => widget.onTabChanged(4),

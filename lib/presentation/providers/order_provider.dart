@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:manager_app/data/models/order.dart';
 import 'package:manager_app/data/services/order_service.dart';
 import 'package:manager_app/data/services/socket_service.dart';
+import 'package:manager_app/presentation/providers/shop_provider.dart';
 import 'package:manager_app/core/utils/logger.dart';
 
 final orderServiceProvider = Provider<OrderService>((ref) => OrderService());
@@ -20,6 +21,7 @@ final orderProvider =
       return OrderNotifier(
         ref.read(orderServiceProvider),
         ref.read(socketServiceProvider),
+        ref,
       );
     });
 
@@ -27,15 +29,18 @@ class OrderNotifier extends StateNotifier<AsyncValue<List<Order>>> {
   static const String _tag = 'OrderNotifier';
   final OrderService _service;
   final SocketService _socketService;
+  final Ref _ref;
   StreamSubscription<Map<String, dynamic>>? _createdSub;
   StreamSubscription<Map<String, dynamic>>? _updatedSub;
   StreamSubscription<Map<String, dynamic>>? _deletedSub;
 
-  OrderNotifier(this._service, this._socketService)
+  OrderNotifier(this._service, this._socketService, this._ref)
       : super(const AsyncLoading()) {
     _initSocket();
     fetchAll();
   }
+
+  String? get _shopId => _ref.read(shopProvider).myShop?.id;
 
   Future<void> _initSocket() async {
     try {
@@ -106,7 +111,10 @@ class OrderNotifier extends StateNotifier<AsyncValue<List<Order>>> {
   Future<void> fetchAll({OrderStatus? statusFilter}) async {
     state = const AsyncLoading();
     try {
-      final orders = await _service.fetchAll(statusFilter: statusFilter);
+      final orders = await _service.fetchAll(
+        statusFilter: statusFilter,
+        shopId: _shopId,
+      );
       // Sort: newest first
       orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       state = AsyncData(orders);
