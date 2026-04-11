@@ -64,6 +64,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<AppUser?>> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_userKey, jsonEncode(user.toJson()));
       state = AsyncData(user);
+      // NOTE: No loadMyShop() here — new managers have no shop yet.
+      // The router redirect will detect myShop == null and push /onboarding.
     } catch (e, st) {
       state = AsyncError(e, st);
       rethrow;

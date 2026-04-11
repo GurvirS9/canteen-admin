@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:manager_app/presentation/providers/auth_provider.dart';
 import 'package:manager_app/presentation/providers/debug_provider.dart';
 import 'package:manager_app/presentation/providers/theme_provider.dart';
@@ -13,6 +14,60 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  static const int _hintAt = 5;
+  static const int _triggerAt = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final debugNotifier = ref.read(debugProvider);
+
+      debugNotifier.onOnboardingTrigger = () {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('🚀 Launching onboarding…'),
+            backgroundColor: const Color(0xFF6C35DE),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (mounted) context.push('/onboarding');
+        });
+      };
+
+      debugNotifier.onToggleCountChanged = (count) {
+        if (!mounted) return;
+        final remaining = _triggerAt - count;
+        if (count == _hintAt) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  '$remaining more toggle${remaining == 1 ? '' : 's'} to trigger onboarding'),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      };
+    });
+  }
+
+  @override
+  void dispose() {
+    // Clean up callbacks to avoid dangling references
+    final debugNotifier = ref.read(debugProvider);
+    debugNotifier.onOnboardingTrigger = null;
+    debugNotifier.onToggleCountChanged = null;
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
@@ -116,12 +171,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               title: 'Debug Mode',
               subtitle: ref.watch(debugProvider).debugMode
                   ? 'Showing error overlay'
-                  : 'Error overlay hidden',
+                  : 'Error overlay hidden  •  tap 10× to replay onboarding',
               trailing: Switch.adaptive(
                 value: ref.watch(debugProvider).debugMode,
                 activeThumbColor: AppColors.error,
-                onChanged: (v) {
-                  ref.read(debugProvider).setDebugMode(v);
+                onChanged: (_) {
+                  // Each toggle counts toward the 10-tap Easter egg
+                  ref.read(debugProvider).toggleDebugMode();
                 },
               ),
             ),

@@ -120,6 +120,39 @@ class ShopNotifier extends StateNotifier<ShopState> {
     }
   }
 
+  Future<void> createShop(Map<String, dynamic> fields) async {
+    AppLogger.i(_tag, 'createShop() ${fields['name']}');
+    try {
+      final shop = Shop(
+        id: '',
+        name: fields['name'] as String? ?? '',
+        ownerId: fields['ownerId'] as String?,
+        latitude: (fields['latitude'] as num?)?.toDouble() ?? 0.0,
+        longitude: (fields['longitude'] as num?)?.toDouble() ?? 0.0,
+        address: fields['address'] as String? ?? '',
+        seatingCapacity: (fields['seatingCapacity'] as num?)?.toInt() ?? 0,
+        tableCount: (fields['tableCount'] as num?)?.toInt() ?? 0,
+        rating: (fields['rating'] as num?)?.toDouble() ?? 0.0,
+        currentQueue: 0,
+        isActive: true,
+        openingTime: fields['openingTime'] as String? ?? '08:00',
+        closingTime: fields['closingTime'] as String? ?? '22:00',
+        isOpen: fields['isOpen'] as bool? ?? true,
+        isCurrentlyOpen: fields['isCurrentlyOpen'] as bool? ?? true,
+      );
+      final created = await _service.create(shop);
+      final existingList = state.shops.valueOrNull ?? [];
+      state = state.copyWith(
+        myShop: created,
+        shops: AsyncData([...existingList, created]),
+      );
+      AppLogger.i(_tag, 'createShop() success: ${created.name} (${created.id})');
+    } catch (e, st) {
+      AppLogger.e(_tag, 'createShop() failed', e, st);
+      rethrow;
+    }
+  }
+
   Future<void> updateShopDetails(String id, Map<String, dynamic> fields) async {
     AppLogger.i(_tag, 'updateShopDetails() $id');
     try {
