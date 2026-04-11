@@ -39,6 +39,12 @@ class ShopNotifier extends StateNotifier<ShopState> {
   /// Getter shortcut used by all scoped providers
   String? get shopId => state.myShop?.id;
 
+  /// Marks shops as loaded with a known list (may be empty).
+  /// Used after signup to unblock the router redirect without an API call.
+  void markShopsLoaded(List<Shop> shops) {
+    state = state.copyWith(shops: AsyncData(shops), clearMyShop: true);
+  }
+
   Future<void> fetchAll() async {
     state = state.copyWith(shops: const AsyncLoading());
     try {

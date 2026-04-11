@@ -12,6 +12,7 @@ import 'package:manager_app/presentation/screens/main_shell.dart';
 import 'package:manager_app/presentation/screens/menu/menu_screen.dart';
 import 'package:manager_app/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:manager_app/presentation/screens/orders/orders_screen.dart';
+import 'package:manager_app/presentation/screens/profile/profile_screen.dart';
 import 'package:manager_app/presentation/screens/shop/shop_settings_screen.dart';
 import 'package:manager_app/presentation/screens/slots/slots_screen.dart';
 
@@ -60,10 +61,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // ── Logged in on auth / splash routes ────────────────────────
       if (isLoggedIn && (isAuthRoute || isSplashRoute)) {
-        // Only send to onboarding if we have finished loading shops
         final shopState = ref.read(shopProvider);
-        final shopsLoaded = !shopState.shops.isLoading;
-        if (!shopsLoaded) return '/dashboard'; // let dashboard load normally
+        // If shops are still loading, stay on splash — the shopProvider
+        // listener will fire notifyListeners() once loading completes,
+        // causing this redirect to re-run with the real shop data.
+        if (shopState.shops.isLoading) return null;
         final hasShop = shopState.myShop != null;
         return hasShop ? '/dashboard' : '/onboarding';
       }
@@ -119,6 +121,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: ShopSettingsScreen()),
           ),
+          GoRoute(
+            path: '/profile',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ProfileScreen()),
+          ),
         ],
       ),
     ],
@@ -137,6 +144,8 @@ int _indexFromLocation(String location) {
       return 3;
     case '/shop':
       return 4;
+    case '/profile':
+      return 5;
     default:
       return 0;
   }
@@ -154,6 +163,8 @@ String _locationFromIndex(int index) {
       return '/orders';
     case 4:
       return '/shop';
+    case 5:
+      return '/profile';
     default:
       return '/dashboard';
   }

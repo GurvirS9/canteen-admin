@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:manager_app/core/theme/app_colors.dart';
 import 'package:manager_app/presentation/providers/auth_provider.dart';
 import 'package:manager_app/presentation/providers/shop_provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:manager_app/data/models/shop.dart';
 
 class ShopSettingsScreen extends ConsumerStatefulWidget {
@@ -112,6 +113,16 @@ class _ShopSettingsScreenState extends ConsumerState<ShopSettingsScreen> {
                     'Contact admin to get a shop assigned.',
                     style: theme.textTheme.bodySmall,
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  TextButton.icon(
+                    onPressed: () => context.push('/onboarding'),
+                    icon: const Icon(Icons.rocket_launch_rounded, size: 18),
+                    label: const Text("Haven't onboarded yet?"),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
                   ),
                 ],
               ),
