@@ -7,6 +7,7 @@ class Slot {
   final int maxOrders;
   final int currentOrders;
   final String? date;
+  final String? shopId;
 
   const Slot({
     required this.id,
@@ -17,6 +18,7 @@ class Slot {
     this.maxOrders = 50,
     this.currentOrders = 0,
     this.date,
+    this.shopId,
   });
 
   double get fillPercentage =>
@@ -90,6 +92,7 @@ class Slot {
     int? maxOrders,
     int? currentOrders,
     String? date,
+    String? shopId,
   }) {
     return Slot(
       id: id ?? this.id,
@@ -100,6 +103,7 @@ class Slot {
       maxOrders: maxOrders ?? this.maxOrders,
       currentOrders: currentOrders ?? this.currentOrders,
       date: date ?? this.date,
+      shopId: shopId ?? this.shopId,
     );
   }
 
@@ -110,6 +114,7 @@ class Slot {
     'maxCapacity': maxOrders,
     'currentOrders': currentOrders,
     'status': isOpen ? 'open' : 'closed',
+    if (shopId != null) 'shopId': shopId,
   };
 
   factory Slot.fromJson(Map<String, dynamic> json) => Slot(
@@ -121,5 +126,10 @@ class Slot {
     maxOrders: (json['maxCapacity'] as num?)?.toInt() ?? json['maxOrders'] as int? ?? 50,
     currentOrders: (json['currentOrders'] as num?)?.toInt() ?? 0,
     date: json['date'] as String?,
+    shopId: (json['shopId'] is String)
+        ? json['shopId'] as String
+        : (json['shopId'] is Map
+            ? (json['shopId']['_id'] ?? json['shopId']['id'])?.toString()
+            : null),
   );
 }

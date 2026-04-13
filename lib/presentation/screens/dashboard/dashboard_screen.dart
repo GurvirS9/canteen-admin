@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:manager_app/data/models/order.dart';
 import 'package:manager_app/presentation/providers/dashboard_provider.dart';
 import 'package:manager_app/presentation/providers/order_provider.dart';
+import 'package:manager_app/presentation/providers/shop_provider.dart';
 import 'package:manager_app/core/theme/app_colors.dart';
 import 'package:manager_app/presentation/widgets/loading_shimmer.dart';
 import 'package:manager_app/presentation/widgets/order_card.dart';
@@ -17,11 +18,39 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashState = ref.watch(dashboardProvider);
     final ordersState = ref.watch(orderProvider);
+    final shopState = ref.watch(shopProvider);
+    final shop = shopState.myShop;
     final currencyFormat = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: shop != null
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Dashboard'),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 8,
+                        color: shop.isOpen ? AppColors.success : Colors.grey,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        shop.name,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: shop.isOpen ? AppColors.success : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : const Text('Dashboard'),
         actions: [
           IconButton(
             icon: Container(
@@ -515,7 +544,7 @@ class _OrderDetailSheet extends StatelessWidget {
               ),
             ),
           // Action buttons
-          if (order.status != OrderStatus.collected)
+          if (order.status != OrderStatus.completed)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Row(children: _buildActionButtons(context)),
@@ -549,8 +578,8 @@ class _OrderDetailSheet extends StatelessWidget {
         icon = Icons.check;
         bgColor = AppColors.ready;
         break;
-      case OrderStatus.collected:
-        label = 'Mark Collected';
+      case OrderStatus.completed:
+        label = 'Mark Completed';
         icon = Icons.done_all;
         bgColor = AppColors.success;
         break;

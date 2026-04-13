@@ -1,25 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:manager_app/data/models/slot.dart';
 import 'package:manager_app/data/services/slot_service.dart';
+import 'package:manager_app/presentation/providers/shop_provider.dart';
 
 final slotServiceProvider = Provider<SlotService>((ref) => SlotService());
 
 final slotProvider =
     StateNotifierProvider<SlotNotifier, AsyncValue<List<Slot>>>((ref) {
-      return SlotNotifier(ref.read(slotServiceProvider));
+      return SlotNotifier(
+        ref.read(slotServiceProvider),
+        ref,
+      );
     });
 
 class SlotNotifier extends StateNotifier<AsyncValue<List<Slot>>> {
   final SlotService _service;
+  final Ref _ref;
 
-  SlotNotifier(this._service) : super(const AsyncLoading()) {
+  SlotNotifier(this._service, this._ref) : super(const AsyncLoading()) {
     fetchAll();
   }
+
+  String? get _shopId => _ref.read(shopProvider).myShop?.id;
 
   Future<void> fetchAll() async {
     state = const AsyncLoading();
     try {
-      final slots = await _service.fetchAll();
+      final slots = await _service.fetchAll(shopId: _shopId);
       state = AsyncData(_sortSlots(slots));
     } catch (e, st) {
       state = AsyncError(e, st);
@@ -83,7 +90,11 @@ class SlotNotifier extends StateNotifier<AsyncValue<List<Slot>>> {
 
   Future<void> create(Slot slot) async {
     try {
-      final created = await _service.create(slot);
+      // Auto-populate shopId if not provided
+      final slotWithShop = _shopId != null && slot.shopId == null
+          ? slot.copyWith(shopId: _shopId)
+          : slot;
+      final created = await _service.create(slotWithShop);
       final currentSlots = state.valueOrNull ?? [];
       state = AsyncData(_sortSlots([...currentSlots, created]));
     } catch (e, st) {

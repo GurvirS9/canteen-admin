@@ -8,9 +8,12 @@ class SlotService {
   static const String _tag = 'SlotService';
   final HttpClient _api = HttpClient();
 
-  Future<List<Slot>> fetchAll() async {
-    AppLogger.i(_tag, 'fetchAll()');
-    final response = await _api.get(AppConstants.slotsEndpoint);
+  Future<List<Slot>> fetchAll({String? shopId}) async {
+    AppLogger.i(_tag, 'fetchAll() shopId=${shopId ?? 'all'}');
+    final endpoint = shopId != null
+        ? '${AppConstants.slotsEndpoint}?shopId=$shopId'
+        : AppConstants.slotsEndpoint;
+    final response = await _api.get(endpoint);
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
       final slots = data.map((e) => Slot.fromJson(e)).toList();

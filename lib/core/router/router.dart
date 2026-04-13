@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:manager_app/presentation/providers/auth_provider.dart';
+import 'package:manager_app/presentation/providers/shop_provider.dart';
 import 'package:manager_app/presentation/screens/dashboard/dashboard_screen.dart';
 import 'package:manager_app/presentation/screens/splash/splash_screen.dart';
 import 'package:manager_app/presentation/screens/auth/login_screen.dart';
@@ -9,16 +10,26 @@ import 'package:manager_app/presentation/screens/auth/signup_screen.dart';
 import 'package:manager_app/presentation/screens/auth/forgot_password_screen.dart';
 import 'package:manager_app/presentation/screens/main_shell.dart';
 import 'package:manager_app/presentation/screens/menu/menu_screen.dart';
+import 'package:manager_app/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:manager_app/presentation/screens/orders/orders_screen.dart';
 import 'package:manager_app/presentation/screens/profile/profile_screen.dart';
+import 'package:manager_app/presentation/screens/shop/shop_settings_screen.dart';
 import 'package:manager_app/presentation/screens/slots/slots_screen.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final Ref ref;
 
   RouterNotifier(this.ref) {
+    // Re-evaluate redirects whenever auth state changes
     ref.listen<AsyncValue<dynamic>>(
       authStateProvider,
+      (prev, next) => notifyListeners(),
+    );
+    // Re-evaluate redirects when the shop is loaded/created so a newly signed-up
+    // manager is pushed to /onboarding and then automatically to /dashboard once
+    // createShop() completes.
+    ref.listen<ShopState>(
+      shopProvider,
       (prev, next) => notifyListeners(),
     );
   }
@@ -32,18 +43,39 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
-      
+
       // While auth is still loading, stay on splash
       if (authState.isLoading) return null;
-      
-      final isLoggedIn = authState.valueOrNull != null;
-      final isAuthRoute = state.matchedLocation == '/login' || 
-                           state.matchedLocation == '/signup' || 
-                           state.matchedLocation == '/forgot-password';
-      final isSplashRoute = state.matchedLocation == '/';
 
+      final isLoggedIn = authState.valueOrNull != null;
+      final loc = state.matchedLocation;
+
+      final isAuthRoute = loc == '/login' ||
+          loc == '/signup' ||
+          loc == '/forgot-password';
+      final isSplashRoute = loc == '/';
+      final isOnboardingRoute = loc == '/onboarding';
+
+      // ── Not logged in ────────────────────────────────────────────
       if (!isLoggedIn && !isAuthRoute) return '/login';
-      if (isLoggedIn && (isAuthRoute || isSplashRoute)) return '/dashboard';
+
+      // ── Logged in on auth / splash routes ────────────────────────
+      if (isLoggedIn && (isAuthRoute || isSplashRoute)) {
+        final shopState = ref.read(shopProvider);
+        // If shops are still loading, stay on splash — the shopProvider
+        // listener will fire notifyListeners() once loading completes,
+        // causing this redirect to re-run with the real shop data.
+        if (shopState.shops.isLoading) return null;
+        final hasShop = shopState.myShop != null;
+        return hasShop ? '/dashboard' : '/onboarding';
+      }
+
+      // ── Already on onboarding but shop now exists → push to dashboard ──
+      if (isLoggedIn && isOnboardingRoute) {
+        final myShop = ref.read(shopProvider).myShop;
+        if (myShop != null) return '/dashboard';
+      }
+
       return null;
     },
     routes: [
@@ -51,6 +83,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
       GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
+      GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
       ShellRoute(
         builder: (context, state, child) {
           final index = _indexFromLocation(state.matchedLocation);
@@ -84,6 +117,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 const NoTransitionPage(child: OrdersScreen()),
           ),
           GoRoute(
+            path: '/shop',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ShopSettingsScreen()),
+          ),
+          GoRoute(
             path: '/profile',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: ProfileScreen()),
@@ -104,8 +142,10 @@ int _indexFromLocation(String location) {
       return 2;
     case '/orders':
       return 3;
-    case '/profile':
+    case '/shop':
       return 4;
+    case '/profile':
+      return 5;
     default:
       return 0;
   }
@@ -122,6 +162,8 @@ String _locationFromIndex(int index) {
     case 3:
       return '/orders';
     case 4:
+      return '/shop';
+    case 5:
       return '/profile';
     default:
       return '/dashboard';

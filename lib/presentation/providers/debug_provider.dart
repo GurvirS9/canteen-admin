@@ -26,16 +26,32 @@ class DebugErrorEntry {
 /// Stores debug mode toggle and an in-memory ring buffer of recent errors.
 class DebugNotifier extends ChangeNotifier {
   static const int _maxEntries = 50;
+  static const int _onboardingTriggerCount = 10;
 
   bool _debugMode = false;
+  int _toggleCount = 0;
   final List<DebugErrorEntry> _errors = [];
+
+  /// Optional callback — set by the profile screen to re-launch onboarding.
+  VoidCallback? onOnboardingTrigger;
+
+  /// Fired after every 5 toggles (but before 10) so the UI can show a hint.
+  ValueChanged<int>? onToggleCountChanged;
 
   bool get debugMode => _debugMode;
   List<DebugErrorEntry> get errors => List.unmodifiable(_errors);
   bool get hasErrors => _errors.isNotEmpty;
+  int get toggleCount => _toggleCount;
 
+  /// Toggles debug mode and counts towards the onboarding Easter egg.
   void toggleDebugMode() {
     _debugMode = !_debugMode;
+    _toggleCount++;
+    onToggleCountChanged?.call(_toggleCount);
+    if (_toggleCount >= _onboardingTriggerCount) {
+      _toggleCount = 0;
+      onOnboardingTrigger?.call();
+    }
     notifyListeners();
   }
 

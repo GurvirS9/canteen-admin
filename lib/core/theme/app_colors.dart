@@ -49,8 +49,10 @@ class AppColors {
         return preparing;
       case OrderStatus.ready:
         return ready;
-      case OrderStatus.collected:
-        return success;
+      case OrderStatus.completed:
+        return completed;
+      case OrderStatus.cancelled:
+        return cancelled;
     }
   }
 }

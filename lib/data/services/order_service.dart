@@ -8,29 +8,72 @@ class OrderService {
   static const String _tag = 'OrderService';
   final HttpClient _api = HttpClient();
 
-  Future<List<Order>> fetchAll({OrderStatus? statusFilter}) async {
-    AppLogger.i(_tag, 'fetchAll() statusFilter=${statusFilter?.name ?? 'none'}');
+  /// Fetch orders for the manager's shop.
+  ///
+  /// [shopId]  — scopes results to a specific shop (required for managers).
+  /// [statusFilter] — optional client-side filter applied after fetch.
+  ///   Active statuses (pending / preparing / ready) use [AppConstants.activeOrdersEndpoint]
+  ///   so the manager only sees in-flight orders.
+  Future<List<Order>> fetchAll({OrderStatus? statusFilter, String? shopId}) async {
+    AppLogger.i(_tag, 'fetchAll() statusFilter=${statusFilter?.name ?? 'none'} shopId=${shopId ?? 'all'}');
 
-    String endpoint = AppConstants.ordersEndpoint;
-    if (statusFilter != null) {
-      if (statusFilter == OrderStatus.pending ||
-          statusFilter == OrderStatus.preparing ||
-          statusFilter == OrderStatus.ready) {
-        endpoint = AppConstants.activeOrdersEndpoint;
-      } else {
-        endpoint += '?status=${statusFilter.name}';
+    // Build query params
+    final queryParams = <String, String>{};
+    if (shopId != null) queryParams['shopId'] = shopId;
+
+    // Decide endpoint — use the dedicated active-orders endpoint only when
+    // explicitly filtering for active (pending/preparing/ready) states so the
+    // list stays focused. For terminal statuses or no filter, use the main
+    // orders endpoint with an optional status query param.
+    String endpoint;
+    if (statusFilter != null &&
+        (statusFilter == OrderStatus.pending ||
+            statusFilter == OrderStatus.preparing ||
+            statusFilter == OrderStatus.ready)) {
+      endpoint = AppConstants.activeOrdersEndpoint;
+    } else {
+      endpoint = AppConstants.ordersEndpoint;
+      if (statusFilter != null) {
+        queryParams['status'] = statusFilter.name;
       }
+    }
+
+    if (queryParams.isNotEmpty) {
+      final query = queryParams.entries.map((e) => '${e.key}=${e.value}').join('&');
+      endpoint += '?$query';
     }
 
     final response = await _api.get(endpoint);
     if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
-      final orders = data.map((e) => Order.fromJson(e)).toList();
+      final dynamic decoded = jsonDecode(response.body);
+      // Active-orders endpoint returns { total, queue: [...] }
+      // Main orders endpoint returns a flat array
+      final List rawList = decoded is Map ? (decoded['queue'] as List? ?? []) : decoded as List;
+      final orders = rawList.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
       AppLogger.i(_tag, 'fetchAll() parsed ${orders.length} orders');
       return orders;
     }
     AppLogger.e(_tag, 'fetchAll() failed with status ${response.statusCode}');
     throw Exception('Failed to fetch orders (${response.statusCode})');
+  }
+
+  /// Fetch the real-time queue: all pending/preparing/ready orders (public).
+  /// Returns orders enriched with `queuePosition` and `estimatedReady`.
+  Future<List<Order>> fetchQueue({String? shopId}) async {
+    AppLogger.i(_tag, 'fetchQueue() shopId=${shopId ?? 'all'}');
+    String endpoint = AppConstants.queueEndpoint;
+    if (shopId != null) endpoint += '?shopId=$shopId';
+
+    final response = await _api.get(endpoint);
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final List rawList = body['queue'] as List? ?? [];
+      final orders = rawList.map((e) => Order.fromJson(e as Map<String, dynamic>)).toList();
+      AppLogger.i(_tag, 'fetchQueue() parsed ${orders.length} queued orders');
+      return orders;
+    }
+    AppLogger.e(_tag, 'fetchQueue() failed with status ${response.statusCode}');
+    throw Exception('Failed to fetch queue (${response.statusCode})');
   }
 
   Future<Order> updateStatus(String orderId, OrderStatus newStatus) async {
