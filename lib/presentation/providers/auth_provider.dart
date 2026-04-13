@@ -25,21 +25,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<AppUser?>> {
 
   Future<void> checkSession() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userStr = prefs.getString(_userKey);
-      // First try Supabase's persisted session (primary source of truth)
+      // Use Supabase's persisted session (primary source of truth)
       final restoredUser = _service.restoreSession();
       if (restoredUser != null) {
         state = AsyncData(restoredUser);
         _ref.read(shopProvider.notifier).loadMyShop(restoredUser.id);
-        return;
-      }
-      // Fall back to cached JSON (covers edge cases)
-      if (userStr != null) {
-        final userData = jsonDecode(userStr);
-        final user = AppUser.fromJson(userData);
-        state = AsyncData(user);
-        _ref.read(shopProvider.notifier).loadMyShop(user.id);
       } else {
         state = const AsyncData(null);
       }
@@ -52,8 +42,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<AppUser?>> {
     state = const AsyncLoading();
     try {
       final user = await _service.login(email, password);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_userKey, jsonEncode(user.toJson()));
       state = AsyncData(user);
       // Auto-load the shop owned by this user
       _ref.read(shopProvider.notifier).loadMyShop(user.id);
@@ -67,8 +55,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<AppUser?>> {
     state = const AsyncLoading();
     try {
       final user = await _service.signup(email, password, name);
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_userKey, jsonEncode(user.toJson()));
       state = AsyncData(user);
       // New managers have no shop yet — mark shops as loaded (empty) so the
       // router redirect detects myShop == null and navigates to /onboarding.
@@ -91,11 +77,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<AppUser?>> {
   }
 
   Future<void> logout() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_userKey);
-    } catch (_) {}
-
     await _service.logout();
     state = const AsyncData(null);
   }
