@@ -1,3 +1,5 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class AppConstants {
   AppConstants._();
 
@@ -7,17 +9,15 @@ class AppConstants {
   // Production backend on Railway
   static const String baseUrl = 'https://kanteen-queue-production.up.railway.app/api';
 
-  /// Socket.IO URL — same host as API but without /api path
-  static String get socketUrl {
-    if (baseUrl.endsWith('/api')) {
-      return baseUrl.substring(0, baseUrl.length - 4);
-    }
-    return baseUrl;
-  }
-
   /// Root URL for resolving uploaded image paths like /uploads/xyz.jpg
-  /// e.g. https://kanteen-queue-production.up.railway.app
-  static String get imageBaseUrl => socketUrl;
+  static const String imageBaseUrl = 'https://kanteen-queue-production.up.railway.app';
+
+  // ─── Supabase ────────────────────────────────────────────────────
+  /// Supabase project URL — loaded from .env
+  static String get supabaseUrl => dotenv.get('SUPABASE_URL', fallback: '');
+
+  /// Supabase anonymous/public key — loaded from .env
+  static String get supabaseAnonKey => dotenv.get('SUPABASE_ANON_KEY', fallback: '');
 
   // ─── Endpoints ────────────────────────────────────────────────
   static const String menuEndpoint = '/menu';

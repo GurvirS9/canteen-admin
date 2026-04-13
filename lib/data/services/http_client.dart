@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io' as dart_io;
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
-import 'package:firebase_auth/firebase_auth.dart' as firebase;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:manager_app/core/constants/app_constants.dart';
 import 'package:manager_app/core/utils/logger.dart';
 
@@ -34,24 +34,19 @@ class HttpClient {
   Uri _uri(String endpoint) =>
       Uri.parse('${AppConstants.baseUrl}$endpoint');
 
-  /// Build headers with Content-Type and Firebase Auth token.
-  /// Tries a force-refreshed Firebase ID token first; falls back to the
-  /// backend's dev-bypass key if no user is signed in.
+  /// Build headers with Content-Type and Supabase session token.
+  /// Falls back to the backend's dev-bypass key if no session is active.
   Future<Map<String, String>> _headers() async {
     final headers = <String, String>{'Content-Type': 'application/json'};
     try {
-      final user = firebase.FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // forceRefresh: true ensures we never send an expired token
-        final token = await user.getIdToken(true);
-        if (token != null && token.isNotEmpty) {
-          headers['Authorization'] = 'Bearer $token';
-          AppLogger.d(_tag, '_headers() Firebase token attached (force-refreshed)');
-          return headers;
-        }
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null && session.accessToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer ${session.accessToken}';
+        AppLogger.d(_tag, '_headers() Supabase token attached');
+        return headers;
       }
     } catch (e) {
-      AppLogger.w(_tag, '_headers() Firebase token failed: $e — falling back to dev key');
+      AppLogger.w(_tag, '_headers() Supabase token failed: $e — falling back to dev key');
     }
     // Fallback: use the backend's Swagger dev-key bypass (dev/test only)
     headers['Authorization'] = 'Bearer ${AppConstants.devAuthKey}';
@@ -253,16 +248,13 @@ class HttpClient {
     // Build auth headers (without Content-Type — multipart sets its own)
     final authHeaders = <String, String>{};
     try {
-      final user = firebase.FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final token = await user.getIdToken(true);
-        if (token != null && token.isNotEmpty) {
-          authHeaders['Authorization'] = 'Bearer $token';
-          AppLogger.d(_tag, 'postMultipart() Firebase token attached (force-refreshed)');
-        }
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null && session.accessToken.isNotEmpty) {
+        authHeaders['Authorization'] = 'Bearer ${session.accessToken}';
+        AppLogger.d(_tag, 'postMultipart() Supabase token attached');
       }
     } catch (e) {
-      AppLogger.w(_tag, 'postMultipart() Firebase token failed: $e — falling back to dev key');
+      AppLogger.w(_tag, 'postMultipart() Supabase token failed: $e — falling back to dev key');
     }
     if (!authHeaders.containsKey('Authorization')) {
       authHeaders['Authorization'] = 'Bearer ${AppConstants.devAuthKey}';
@@ -319,16 +311,13 @@ class HttpClient {
 
     final authHeaders = <String, String>{};
     try {
-      final user = firebase.FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final token = await user.getIdToken(true);
-        if (token != null && token.isNotEmpty) {
-          authHeaders['Authorization'] = 'Bearer $token';
-          AppLogger.d(_tag, 'putMultipart() Firebase token attached (force-refreshed)');
-        }
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null && session.accessToken.isNotEmpty) {
+        authHeaders['Authorization'] = 'Bearer ${session.accessToken}';
+        AppLogger.d(_tag, 'putMultipart() Supabase token attached');
       }
     } catch (e) {
-      AppLogger.w(_tag, 'putMultipart() Firebase token failed: $e — falling back to dev key');
+      AppLogger.w(_tag, 'putMultipart() Supabase token failed: $e — falling back to dev key');
     }
     if (!authHeaders.containsKey('Authorization')) {
       authHeaders['Authorization'] = 'Bearer ${AppConstants.devAuthKey}';

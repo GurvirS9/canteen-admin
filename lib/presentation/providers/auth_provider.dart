@@ -27,17 +27,23 @@ class AuthNotifier extends StateNotifier<AsyncValue<AppUser?>> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userStr = prefs.getString(_userKey);
+      // First try Supabase's persisted session (primary source of truth)
+      final restoredUser = _service.restoreSession();
+      if (restoredUser != null) {
+        state = AsyncData(restoredUser);
+        _ref.read(shopProvider.notifier).loadMyShop(restoredUser.id);
+        return;
+      }
+      // Fall back to cached JSON (covers edge cases)
       if (userStr != null) {
         final userData = jsonDecode(userStr);
         final user = AppUser.fromJson(userData);
         state = AsyncData(user);
-        // Auto-load shop context for the restored session
         _ref.read(shopProvider.notifier).loadMyShop(user.id);
       } else {
         state = const AsyncData(null);
       }
     } catch (_) {
-      // Silent fail if no saved session
       state = const AsyncData(null);
     }
   }

@@ -8,8 +8,9 @@ import 'package:manager_app/core/router/router.dart';
 import 'package:manager_app/core/theme/app_theme.dart';
 import 'package:manager_app/core/utils/logger.dart';
 import 'package:manager_app/core/theme/app_colors.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:manager_app/firebase_options.dart';
+import 'package:manager_app/core/constants/app_constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class DevHttpOverrides extends HttpOverrides {
   @override
@@ -21,7 +22,11 @@ class DevHttpOverrides extends HttpOverrides {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await dotenv.load(fileName: ".env");
+  await Supabase.initialize(
+    url: AppConstants.supabaseUrl,
+    anonKey: AppConstants.supabaseAnonKey,
+  );
   HttpOverrides.global = DevHttpOverrides();
   runApp(const ProviderScope(child: CanteenManagerApp()));
 }

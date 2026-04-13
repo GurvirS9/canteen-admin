@@ -36,6 +36,7 @@ lib/
 - **Navigation**: `GoRouter`
 - **Typography & UI**: `google_fonts`, `shimmer`, `cached_network_image`
 - **Data Persistence**: `shared_preferences`
+- **Backend & Realtime**: `Supabase`
 
 ## ⚙️ How to Run
 1. Ensure you have the Flutter SDK installed and an emulator (or physical device) connected.
@@ -44,9 +45,12 @@ lib/
    ```bash
    flutter pub get
    ```
-4. Run the application:
+4. Create a `.env` file in the root of the project with your Supabase keys:
+   ```env
+   SUPABASE_URL=https://your-project-id.supabase.co
+   SUPABASE_ANON_KEY=your-anon-key
+   ```
+5. Run the application:
    ```bash
    flutter run
    ```
-
-*No additional API configuration is strictly required to test the front-end features. The app ships with an extensive `demo_data` wrapper that faithfully simulates standard API latency and state retention ready out of the box.*
