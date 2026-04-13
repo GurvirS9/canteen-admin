@@ -2,6 +2,11 @@ name: Flutter Build & Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version string (e.g., v1.0.0)'
+        required: false
+        default: ''
   push:
     tags:
       - "v*.*.*"
@@ -49,7 +54,10 @@ jobs:
 
       - name: Rename APKs with version tag
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="${{ github.ref_name }}"
+          fi
           for f in build/app/outputs/flutter-apk/*-release.apk; do
             base=$(basename "$f" .apk)
             cp "$f" "build/app/outputs/flutter-apk/${base}-${VERSION}.apk"
@@ -128,7 +136,10 @@ jobs:
 
       - name: Rename IPA with version tag
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="${{ github.ref_name }}"
+          fi
           find ios/build/ipa -name "*.ipa" -exec cp {} "ios/build/ipa/Runner-${VERSION}.ipa" \;
 
       - name: Upload IPA artifact
@@ -159,10 +170,10 @@ jobs:
       - name: Create Release & upload artifacts
         uses: softprops/action-gh-release@v2
         with:
-          name: "Release ${{ github.ref_name }}"
-          tag_name: ${{ github.ref_name }}
+          name: "Release ${{ inputs.version || github.ref_name }}"
+          tag_name: ${{ inputs.version || github.ref_name }}
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(inputs.version || github.ref_name, '-') }}
           generate_release_notes: true
           files: |
             artifacts/android/*.apk
