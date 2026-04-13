@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:manager_app/data/models/user.dart';
 import 'package:manager_app/data/services/auth_service.dart';
 import 'package:manager_app/presentation/providers/shop_provider.dart';
@@ -15,7 +13,7 @@ final authStateProvider =
 class AuthNotifier extends StateNotifier<AsyncValue<AppUser?>> {
   final AuthService _service;
   final Ref _ref;
-  static const _userKey = 'canteen_user';
+
 
   AuthNotifier(this._service, this._ref) : super(const AsyncData(null)) {
     checkSession();
