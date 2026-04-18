@@ -117,16 +117,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                 const NoTransitionPage(child: OrdersScreen()),
           ),
           GoRoute(
-            path: '/shop',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: ShopSettingsScreen()),
-          ),
-          GoRoute(
             path: '/profile',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: ProfileScreen()),
           ),
         ],
+      ),
+      GoRoute(
+        path: '/shop',
+        builder: (context, state) => const ShopSettingsScreen(),
       ),
     ],
   );
@@ -138,14 +137,12 @@ int _indexFromLocation(String location) {
       return 0;
     case '/menu':
       return 1;
-    case '/slots':
-      return 2;
     case '/orders':
+      return 2;
+    case '/slots':
       return 3;
-    case '/shop':
-      return 4;
     case '/profile':
-      return 5;
+      return 4;
     default:
       return 0;
   }
@@ -158,12 +155,10 @@ String _locationFromIndex(int index) {
     case 1:
       return '/menu';
     case 2:
-      return '/slots';
-    case 3:
       return '/orders';
+    case 3:
+      return '/slots';
     case 4:
-      return '/shop';
-    case 5:
       return '/profile';
     default:
       return '/dashboard';

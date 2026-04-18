@@ -163,6 +163,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
             const SizedBox(height: 16),
 
+            const _SectionTitle(title: 'Shop Management'),
+            const SizedBox(height: 8),
+
+            _SettingsTile(
+              icon: Icons.store_outlined,
+              title: 'Edit My Shop',
+              subtitle: 'Manage shop details and settings',
+              onTap: () => context.push('/shop'),
+            ),
+
+            const SizedBox(height: 16),
+
             const _SectionTitle(title: 'Settings'),
             const SizedBox(height: 8),
 
@@ -171,7 +183,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               title: 'Debug Mode',
               subtitle: ref.watch(debugProvider).debugMode
                   ? 'Showing error overlay'
-                  : 'Error overlay hidden  •  tap 10× to replay onboarding',
+                  : 'Error overlay hidden',
               trailing: Switch.adaptive(
                 value: ref.watch(debugProvider).debugMode,
                 activeThumbColor: AppColors.error,
