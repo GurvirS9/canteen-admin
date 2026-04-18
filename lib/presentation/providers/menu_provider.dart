@@ -1,26 +1,33 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:manager_app/data/models/menu_item.dart';
 import 'package:manager_app/data/services/menu_service.dart';
+import 'package:manager_app/presentation/providers/shop_provider.dart';
 
 
 final menuServiceProvider = Provider<MenuService>((ref) => MenuService());
 
 final menuProvider =
     StateNotifierProvider<MenuNotifier, AsyncValue<List<MenuItem>>>((ref) {
-      return MenuNotifier(ref.read(menuServiceProvider));
+      final shopId = ref.watch(shopProvider).myShop?.id;
+      return MenuNotifier(ref.read(menuServiceProvider), shopId);
     });
 
 class MenuNotifier extends StateNotifier<AsyncValue<List<MenuItem>>> {
   final MenuService _service;
+  final String? shopId;
 
-  MenuNotifier(this._service) : super(const AsyncLoading()) {
+  MenuNotifier(this._service, this.shopId) : super(const AsyncLoading()) {
     fetchAll();
   }
 
   Future<void> fetchAll() async {
     state = const AsyncLoading();
     try {
-      final items = await _service.fetchAll();
+      if (shopId == null) {
+        state = const AsyncData([]);
+        return;
+      }
+      final items = await _service.fetchAll(shopId: shopId);
       state = AsyncData(items);
     } catch (e, st) {
       state = AsyncError(e, st);

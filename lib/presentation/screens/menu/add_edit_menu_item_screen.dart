@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:manager_app/data/models/menu_item.dart';
 import 'package:manager_app/presentation/providers/menu_provider.dart';
+import 'package:manager_app/presentation/providers/shop_provider.dart';
 import 'package:manager_app/core/constants/app_constants.dart';
 import 'package:manager_app/core/theme/app_colors.dart';
 
@@ -136,6 +137,7 @@ class _AddEditMenuItemScreenState extends ConsumerState<AddEditMenuItemScreen> {
       // If 'remove existing image' was requested and no new image picked,
       // we send an empty image field so the backend clears it.
       // The service will call DELETE /menu/:id/image after update if needed.
+      final shopId = ref.read(shopProvider).myShop?.id;
       final item = MenuItem(
         id: widget.item?.id ?? '',
         name: _nameCtrl.text.trim(),
@@ -143,6 +145,7 @@ class _AddEditMenuItemScreenState extends ConsumerState<AddEditMenuItemScreen> {
         price: double.parse(_priceCtrl.text.trim()),
         prepTime: int.tryParse(_prepTimeCtrl.text.trim()) ?? 10,
         category: _category,
+        shopId: widget.item?.shopId ?? shopId,
         isAvailable: _isAvailable,
         isVeg: _isVeg,
         imageUrl: _removeExistingImage && _localImagePath == null

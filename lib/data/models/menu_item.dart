@@ -5,6 +5,7 @@ class MenuItem {
   final double price;
   final String category;
   final String? imageUrl;
+  final String? shopId;
   final bool isAvailable;
   final bool isVeg;
   final DateTime createdAt;
@@ -16,6 +17,7 @@ class MenuItem {
     required this.description,
     required this.price,
     required this.category,
+    this.shopId,
     this.imageUrl,
     this.isAvailable = true,
     this.isVeg = true,
@@ -29,6 +31,7 @@ class MenuItem {
     String? description,
     double? price,
     String? category,
+    String? shopId,
     String? imageUrl,
     bool? isAvailable,
     bool? isVeg,
@@ -41,6 +44,7 @@ class MenuItem {
       description: description ?? this.description,
       price: price ?? this.price,
       category: category ?? this.category,
+      shopId: shopId ?? this.shopId,
       imageUrl: imageUrl ?? this.imageUrl,
       isAvailable: isAvailable ?? this.isAvailable,
       isVeg: isVeg ?? this.isVeg,
@@ -51,6 +55,7 @@ class MenuItem {
 
   Map<String, dynamic> toJson() => {
     'name': name,
+    if (shopId != null) 'shopId': shopId,
     'price': price,
     'prepTime': prepTime,
     'isVeg': isVeg,
@@ -63,6 +68,7 @@ class MenuItem {
     description: json['description'] as String? ?? 'No description available',
     price: (json['price'] as num?)?.toDouble() ?? 0.0,
     category: json['category'] as String? ?? 'Snacks',
+    shopId: json['shop_id']?.toString() ?? json['shopId']?.toString(),
     imageUrl: _resolveImageUrl(json['image'] as String? ?? json['imageUrl'] as String?),
     isAvailable: json['isAvailable'] as bool? ?? true,
     isVeg: json['isVeg'] as bool? ?? true,

@@ -8,9 +8,12 @@ class MenuService {
   static const String _tag = 'MenuService';
   final HttpClient _api = HttpClient();
 
-  Future<List<MenuItem>> fetchAll() async {
-    AppLogger.i(_tag, 'fetchAll()');
-    final response = await _api.get(AppConstants.menuEndpoint);
+  Future<List<MenuItem>> fetchAll({String? shopId}) async {
+    AppLogger.i(_tag, 'fetchAll() shopId=$shopId');
+    final endpoint = shopId != null
+        ? '${AppConstants.menuEndpoint}?shopId=$shopId'
+        : AppConstants.menuEndpoint;
+    final response = await _api.get(endpoint);
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
       final items = data.map((e) => MenuItem.fromJson(e)).toList();
@@ -90,5 +93,6 @@ class MenuService {
         'isVeg': item.isVeg.toString(),
         'isAvailable': item.isAvailable.toString(),
         'avgDemand': '0',
+        if (item.shopId != null) 'shopId': item.shopId!,
       };
 }
