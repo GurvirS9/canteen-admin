@@ -3,29 +3,31 @@
 A robust, beautifully designed administrative dashboard and application built with Flutter. Inspired by the sleek interface flows of modern administrative panels, this app streamlines the manager's process by allowing them to oversee daily orders, configure menu items flexibly, and handle pickup slots dynamically.
 
 ## 🚀 Features
-- **Real-Time Dashboard**: See your daily summary instantly—total orders, revenue, active and completed orders at a glance with a clean grid overview.
-- **Order Lifecycle Management**: A dedicated screen to view, filter, and modify order statuses (Pending, Accepted, Preparing, Ready, Completed) with beautiful tag badges.
-- **Smart Menu & Catalog**: Browse, add, and meticulously edit menu items, including categories, pricing, and toggling visibility availability instantly.
-- **Dynamic Slot Booking Control**: Add, review, and toggle time slots. Monitor capacity against current orders dynamically to prevent overflow and ensure smooth student pickups.
-- **Modern User Experience**: Built with Shimmer loading placeholders, responsive Bottom Sheets for quick edits, and seamless GoRouter navigation.
-- **Universal Theme Support**: A fully responsive palette spanning system, light, and dark modes complete with custom reddish accents and iOS-style neutral deep grays configured using Material 3.
+- **Intelligent Onboarding**: A comprehensive 5-step wizard for new managers to set up their shop details, location, categories, and initial menu.
+- **Real-Time Dashboard**: Monitor daily performance with revenue tracking, order volume, and active status summaries.
+- **Shop Profile Management**: Easily toggle your canteen's status (Open/Closed) and update shop information on the fly.
+- **Order Lifecycle Management**: Process orders through a complete lifecycle—from Pending and Accepted to Preparing, Ready, and Completed—with real-time updates.
+- **Shop-Specific Menu control**: Manage a catalog of items unique to your canteen, including category assignment, stock toggling, and image uploads.
+- **Dynamic Slot Control**: Manage pickup windows and monitor capacity to ensure a smooth flow of student arrivals.
+- **Modern UI/UX**: Built with Material 3, Shimmer loading states, and smooth navigation for a premium administrative experience.
 
 ## 🏗️ Architecture
-The project strictly adheres to a **Layer-First Clean Architecture**, deeply separating concerns for maximum scalability.
+The project strictly adheres to a **Layer-First Clean Architecture**, ensuring deep separation of concerns.
 
 ```text
 lib/
 ├── core/
-│   ├── constants/    # Essential string keys and branding parameters
-│   ├── theme/        # Global overarching AppTheme data (Light & Dark)
-│   └── utils/        # Global utilities, formatters, and Mock Data
+│   ├── constants/    # Essential branding and string keys
+│   ├── router/       # GoRouter configuration and route definitions
+│   ├── theme/        # Centralized AppTheme (Light & Dark)
+│   └── utils/        # Generic helpers, loggers, and time formatters
 ├── data/
-│   ├── models/       # Application models (User, Order, MenuItem, Slot)
-│   └── services/     # External API and remote interactions
+│   ├── models/       # Entities (Shop, MenuItem, Order, Slot, User)
+│   └── services/     # API clients, Supabase interactions, and Sockets
 └── presentation/
-    ├── providers/    # Riverpod state management and business logic
-    ├── screens/      # Complex widget pages and routable shells
-    └── widgets/      # Isolated, reusable UI components (Cards, Chips)
+    ├── providers/    # Riverpod State Notifiers and business logic
+    ├── screens/      # Feature-based pages and navigation shells
+    └── widgets/      # Fragmented, reusable UI components
 ```
 
 *Note: The entire codebase utilizes strict, absolute package imports (`import 'package:manager_app/...;`) to guarantee perfectly re-locatable components without relative path breakage.*
@@ -34,9 +36,10 @@ lib/
 - **Framework**: `Flutter` (Material 3)
 - **State Management**: `Riverpod` (`flutter_riverpod`)
 - **Navigation**: `GoRouter`
-- **Typography & UI**: `google_fonts`, `shimmer`, `cached_network_image`
+- **typography & UI**: `google_fonts`, `shimmer`, `flutter_animate`, `cached_network_image`
+- **Media**: `image_picker` & `image_cropper` for profile/menu photos
 - **Data Persistence**: `shared_preferences`
-- **Backend & Realtime**: `Supabase`
+- **Backend**: `Supabase` (Auth, Database, Storage)
 
 ## ⚙️ How to Run
 1. Ensure you have the Flutter SDK installed and an emulator (or physical device) connected.
